@@ -1,0 +1,1987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Device Inspector · Platform Proposal · PIXORAMA → Hugo Martinez</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+/* ============================================================
+   AI DEVICE INSPECTOR — PLATFORM PROPOSAL
+   Pixorama Group · house system (Manrope + JetBrains Mono)
+   ============================================================ */
+
+:root{
+  /* brand — from the PXO logo */
+  --i:#3a33c9;      /* deep blue    */
+  --c:#18bccf;      /* cyan         */
+  --v:#7c3aed;      /* violet       */
+  --p:#b23fc9;      /* magenta      */
+  --grad:linear-gradient(120deg,var(--i) 0%,var(--v) 52%,var(--p) 100%);
+  --grad-cool:linear-gradient(120deg,var(--c),var(--v));
+
+  /* ink & surface */
+  --ink:#0d0e1a;
+  --ink2:#33354a;
+  --muted:#5f6178;
+  --faint:#686b82;
+  --line:#e7e9f2;
+  --line2:#f0f2f8;
+  --paper:#ffffff;
+  --paper2:#f6f7fb;
+  --dark:#05050f;
+  --dark2:#0b0b1c;
+  --dark-line:rgba(255,255,255,.10);
+  --dark-ink:#eef0fb;
+  --dark-ink2:#b4b7d4;
+  --dark-faint:#9698c6;
+
+  /* semantic */
+  --ok:#10b981;
+  --warn:#f59e0b;
+  --crit:#ef4444;
+
+  /* 8px scale */
+  --s1:8px; --s2:16px; --s3:24px; --s4:32px; --s5:48px; --s6:64px; --s7:96px; --s8:128px;
+
+  --r-sm:8px; --r-md:14px; --r-lg:22px;
+  --ease:cubic-bezier(.22,.61,.36,1);
+  --t-fast:200ms; --t-mid:340ms; --t-slow:640ms;
+
+  --maxw:1160px;
+}
+
+*,*::before,*::after{ box-sizing:border-box; margin:0; padding:0; }
+html{ scroll-behavior:smooth; -webkit-text-size-adjust:100%; }
+body{
+  font-family:'Manrope',-apple-system,'Segoe UI',system-ui,sans-serif;
+  background:var(--paper);
+  color:var(--ink);
+  font-size:16px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  overflow-x:hidden;
+}
+img{ max-width:100%; display:block; }
+::selection{ background:rgba(124,58,237,.22); }
+
+/* ---------- type ---------- */
+/* Note: JetBrains Mono's slashed-zero alternate ("zero" 1) is deliberately NOT
+   enabled — at label sizes the slash closes up and "W10" reads as "W18". */
+.mono{ font-family:'JetBrains Mono','SFMono-Regular',Consolas,monospace; }
+.eyebrow{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px; letter-spacing:.28em; text-transform:uppercase;
+  color:var(--i); font-weight:500;
+}
+.dark .eyebrow, .eyebrow.on-dark{ color:var(--c); }
+h1{ font-size:clamp(38px,5.6vw,68px); font-weight:800; letter-spacing:-.035em; line-height:1.02; }
+h2{ font-size:clamp(28px,3.4vw,44px); font-weight:800; letter-spacing:-.03em; line-height:1.08; }
+h3{ font-size:20px; font-weight:700; letter-spacing:-.015em; line-height:1.25; }
+h4{ font-size:15px; font-weight:700; letter-spacing:-.005em; }
+p{ color:var(--ink2); }
+.lead{ font-size:clamp(17px,1.5vw,21px); line-height:1.62; color:var(--ink2); font-weight:400; }
+.dark .lead{ color:var(--dark-ink2); }
+.sm{ font-size:14px; line-height:1.6; }
+.xs{ font-size:12.5px; line-height:1.55; }
+strong{ font-weight:700; color:var(--ink); }
+.dark strong{ color:#fff; }
+.accent{ color:var(--v); }
+.dark .accent{ color:#a78bfa; }
+
+/* ---------- layout ---------- */
+.wrap{ width:100%; max-width:var(--maxw); margin:0 auto; padding:0 var(--s4); }
+section{ position:relative; padding:var(--s8) 0; }
+section.tight{ padding:var(--s7) 0; }
+.dark{ background:var(--dark); color:var(--dark-ink); }
+.dark p{ color:var(--dark-ink2); }
+.dark h1,.dark h2,.dark h3,.dark h4{ color:#fff; }
+.tint{ background:var(--paper2); }
+.rule{ height:3px; width:56px; border-radius:3px; background:var(--grad); }
+.hair{ height:1px; background:var(--line); }
+.dark .hair{ background:var(--dark-line); }
+
+.sec-head{ display:flex; align-items:flex-start; gap:var(--s3); margin-bottom:var(--s6); }
+.sec-no{
+  font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:.2em;
+  color:var(--faint); padding-top:10px; flex:none; width:44px;
+}
+.dark .sec-no{ color:var(--dark-faint); }
+.sec-head .t{ flex:1; min-width:0; }
+.sec-head h2{ margin:10px 0 0; max-width:22ch; }
+.sec-head .lead{ margin-top:var(--s2); max-width:64ch; }
+
+/* ---------- reveal motion ----------
+   Content is visible by default and only hidden once the script has confirmed
+   it can reveal it again (html.js-motion). A page that never runs the script,
+   or a browser whose IntersectionObserver misbehaves, still reads normally. */
+.js-motion .rv{ opacity:0; transform:translateY(14px); }
+.js-motion .rv.in{
+  opacity:1; transform:none;
+  transition:opacity var(--t-slow) var(--ease) var(--d,0ms),
+             transform var(--t-slow) var(--ease) var(--d,0ms);
+}
+
+/* ============================================================
+   SCROLL PROGRESS
+   ============================================================ */
+.progress{
+  position:fixed; top:0; left:0; height:2px; width:100%; z-index:90;
+  background:transparent; pointer-events:none;
+}
+.progress i{
+  display:block; height:100%; width:100%; background:var(--grad);
+  transform:scaleX(0); transform-origin:0 50%;
+}
+
+/* ============================================================
+   COVER
+   ============================================================ */
+.cover{
+  min-height:100vh; display:flex; align-items:center;
+  padding:var(--s7) 0 var(--s6);
+  background:
+    radial-gradient(52% 42% at 84% 8%, rgba(124,58,237,.20), transparent 70%),
+    radial-gradient(46% 40% at 4% 96%, rgba(24,188,207,.13), transparent 70%),
+    radial-gradient(38% 34% at 96% 78%, rgba(178,63,201,.14), transparent 70%),
+    var(--dark);
+  overflow:hidden;
+}
+.cover::after{
+  content:''; position:absolute; inset:0; pointer-events:none; opacity:.5;
+  background-image:
+    linear-gradient(rgba(255,255,255,.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.028) 1px, transparent 1px);
+  background-size:72px 72px;
+  mask-image:radial-gradient(70% 60% at 50% 40%, #000, transparent 78%);
+}
+.cover .wrap{ position:relative; z-index:2; }
+.cover-grid{ display:grid; grid-template-columns:1.02fr .98fr; gap:var(--s6); align-items:center; }
+/* Grid children default to a min-content floor; nowrap labels inside would
+   otherwise widen the column past the viewport on small screens. */
+.cover-grid > *,.plain-grid > *,.split > *,.journey-wrap > *,.layer > *{ min-width:0; }
+
+/* PXO monogram — gradient square with the "PX", violet ring as the "O". */
+.lock{ display:flex; align-items:center; gap:14px; }
+.lock .mark{ height:38px; width:auto; flex:none; display:block;
+  filter:drop-shadow(0 6px 20px rgba(124,58,237,.38)); }
+/* Uppercase wordmark tinted with a faded version of the mark's own gradient.
+   Solid colour first: if background-clip:text is unavailable the text must still
+   be visible, not transparent. Kept on one line — Apple's PDF viewers paint a
+   solid box over gradient-clipped text that wraps (see the capability statement). */
+.lock .word{
+  font-size:15px; font-weight:800; letter-spacing:.17em; text-transform:uppercase;
+  white-space:nowrap; color:#a99ee6;
+}
+@supports ((-webkit-background-clip:text) or (background-clip:text)){
+  .lock .word{
+    background:linear-gradient(100deg,#8f7ff0 0%,#a78bfa 46%,#cf93de 100%);
+    -webkit-background-clip:text; background-clip:text;
+    -webkit-text-fill-color:transparent;
+  }
+}
+.lock .word em{ font-style:normal; }
+footer .lock{ gap:11px; }
+footer .lock .mark{ height:24px; filter:none; }
+footer .lock .word{ font-size:12px; letter-spacing:.16em; }
+
+.cover h1{ margin:var(--s3) 0 0; }
+.cover h1 .l2{ display:block; color:#a78bfa; }
+.cover .lead{ margin-top:var(--s3); max-width:50ch; }
+
+.party{
+  margin-top:var(--s5); display:grid; grid-template-columns:1fr 1fr; gap:var(--s2);
+  max-width:460px;
+}
+.party .box{
+  border:1px solid var(--dark-line); border-radius:var(--r-md);
+  padding:14px 16px; background:rgba(255,255,255,.035);
+}
+.party .k{ font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.22em;
+  text-transform:uppercase; color:var(--dark-faint); }
+.party .v{ font-size:15px; font-weight:700; color:#fff; margin-top:6px; }
+.party .s{ font-size:12px; color:var(--dark-faint); margin-top:2px; }
+
+.metarail{
+  margin-top:var(--s5); display:flex; flex-wrap:wrap; gap:var(--s4);
+  padding-top:var(--s3); border-top:1px solid var(--dark-line);
+}
+.metarail .m .n{ font-family:'JetBrains Mono',monospace; font-size:26px; font-weight:700; color:#fff; letter-spacing:-.02em; }
+.metarail .m .n b{ color:#a78bfa; font-weight:700; }
+.metarail .m .l{ font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--dark-faint); margin-top:4px; }
+
+/* --- signature moment: the scan viewport --- */
+.viewport{
+  position:relative; border-radius:var(--r-lg); overflow:hidden;
+  border:1px solid rgba(255,255,255,.16);
+  box-shadow:0 40px 90px -30px rgba(0,0,0,.9), 0 0 0 1px rgba(124,58,237,.16);
+  background:#0a0a16;
+}
+.viewport .shot{ width:100%; aspect-ratio:16/10; object-fit:cover; opacity:.94; }
+.viewport .chrome{
+  position:absolute; top:0; left:0; right:0; height:38px; z-index:4;
+  display:flex; align-items:center; gap:8px; padding:0 14px;
+  background:linear-gradient(180deg,rgba(5,5,15,.94),rgba(5,5,15,0));
+  font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.16em;
+  text-transform:uppercase; color:#8a8dbb;
+}
+.viewport .chrome .dot{ width:6px; height:6px; border-radius:50%; background:var(--c);
+  box-shadow:0 0 10px var(--c); animation:blip 2.4s var(--ease) infinite; }
+@keyframes blip{ 0%,100%{ opacity:1 } 50%{ opacity:.28 } }
+.viewport .chrome .right{ margin-left:auto; color:#5f628f; white-space:nowrap; }
+.viewport .chrome > span:not(.dot):not(.right){ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+.scan{
+  position:absolute; left:0; right:0; height:150px; z-index:3; pointer-events:none;
+  background:linear-gradient(180deg, transparent, rgba(24,188,207,.16) 62%, rgba(124,58,237,.30) 88%, rgba(255,255,255,.85) 100%);
+  animation:sweep 3.4s var(--ease) 1 forwards;
+}
+@keyframes sweep{
+  0%   { transform:translateY(-160px); opacity:0 }
+  12%  { opacity:1 }
+  76%  { opacity:1 }
+  92%  { transform:translateY(560px); opacity:0 }
+  100% { transform:translateY(560px); opacity:0 }
+}
+
+.det{ position:absolute; z-index:5; border:2px solid; border-radius:3px; opacity:0; }
+.det .tag{
+  position:absolute; top:-19px; left:-2px; white-space:nowrap;
+  font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700;
+  letter-spacing:.06em; padding:2px 6px; border-radius:3px; color:#05050f;
+}
+/* Detections land once as the first sweep passes and then stay put — they are
+   the result of the inspection, not a decoration that loops. `forwards` holds
+   the final frame. */
+.det.a{ left:8%;  top:52%; width:38%; height:30%; border-color:var(--crit); background:rgba(239,68,68,.14);
+        animation:snap .55s var(--ease) 1.55s forwards; }
+.det.a .tag{ background:var(--crit); }
+.det.b{ left:52%; top:30%; width:30%; height:24%; border-color:var(--warn); background:rgba(245,158,11,.12);
+        animation:snap .55s var(--ease) 1.25s forwards; }
+.det.b .tag{ background:var(--warn); }
+.det.c{ left:58%; top:60%; width:21%; height:15%; border-color:var(--c); background:rgba(24,188,207,.12);
+        animation:snap .55s var(--ease) 1.8s forwards; }
+.det.c .tag{ background:var(--c); }
+@keyframes snap{
+  from{ opacity:0; transform:scale(1.06) }
+  to  { opacity:1; transform:scale(1) }
+}
+.viewport .verdict{
+  position:absolute; left:14px; bottom:14px; z-index:6;
+  display:flex; align-items:center; gap:10px;
+  border:1px solid rgba(255,255,255,.18); border-radius:999px;
+  background:rgba(5,5,15,.82); backdrop-filter:blur(8px);
+  padding:7px 14px 7px 10px;
+  font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.14em;
+  text-transform:uppercase; color:#cfd1ff;
+  animation:snap .55s var(--ease) 2.4s forwards;
+}
+.viewport .verdict b{ color:#fff; font-size:13px; letter-spacing:0; }
+.viewport .verdict .pill{ width:22px; height:22px; border-radius:50%; background:var(--grad);
+  display:grid; place-items:center; color:#fff; font-size:11px; font-weight:800; }
+
+.scrollcue{
+  position:absolute; left:50%; bottom:26px; transform:translateX(-50%); z-index:3;
+  font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.24em;
+  text-transform:uppercase; color:var(--dark-faint); text-align:center;
+}
+.scrollcue i{ display:block; width:1px; height:34px; margin:8px auto 0;
+  background:linear-gradient(180deg,var(--v),transparent); }
+
+/* ============================================================
+   PLAIN ENGLISH
+   ============================================================ */
+.bigstate{
+  font-size:clamp(22px,2.5vw,32px); line-height:1.42; font-weight:600;
+  letter-spacing:-.02em; color:var(--ink); max-width:26ch;
+}
+.plain-grid{ display:grid; grid-template-columns:1fr 1.15fr; gap:var(--s6); align-items:start; }
+.plain-body p + p{ margin-top:var(--s2); }
+.outputs{ margin-top:var(--s5); }
+.outputs > div{ display:flex; justify-content:space-between; align-items:baseline; gap:var(--s2);
+  padding:13px 0; border-bottom:1px solid var(--line2); }
+.outputs > div:first-child{ border-top:1px solid var(--line2); }
+.outputs dt{ font-size:14px; font-weight:700; color:var(--ink); }
+.outputs dd{ font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted);
+  text-align:right; letter-spacing:.02em; }
+
+.compare{ display:grid; grid-template-columns:1fr 1fr; gap:0; margin-top:var(--s6);
+  border:1px solid var(--line); border-radius:var(--r-lg); overflow:hidden; }
+.compare .col{ padding:var(--s4); }
+.compare .col:first-child{ border-right:1px solid var(--line); background:var(--paper2); }
+.compare .h{ display:flex; align-items:center; gap:9px; margin-bottom:var(--s3); }
+.compare .h .dot{ width:8px; height:8px; border-radius:50%; }
+.compare .h .lbl{ font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--muted); }
+.compare ul{ list-style:none; }
+.compare li{ position:relative; padding-left:22px; font-size:14.5px; line-height:1.55; color:var(--ink2); }
+.compare li + li{ margin-top:13px; }
+.compare li::before{
+  content:''; position:absolute; left:0; top:9px; width:9px; height:9px; border-radius:2px;
+  border:1.5px solid var(--faint);
+}
+.compare .col.good li::before{ border-color:var(--v); background:rgba(124,58,237,.18); }
+
+.tiles{ display:grid; grid-template-columns:repeat(4,1fr); gap:var(--s2); margin-top:var(--s5); }
+.tile{ border:1px solid var(--line); border-radius:var(--r-md); padding:var(--s3); background:var(--paper); }
+.tile .n{ font-family:'JetBrains Mono',monospace; font-size:30px; font-weight:700;
+  letter-spacing:-.03em; color:var(--i); }
+.tile .l{ font-size:13px; color:var(--ink2); margin-top:6px; line-height:1.4; }
+.tile .tagx{ font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:.18em;
+  text-transform:uppercase; color:var(--faint); margin-top:10px; display:block; }
+
+/* ============================================================
+   JOURNEY
+   ============================================================ */
+/* Steps on the left, a sticky evidence column on the right — the photographs
+   stay in view while you read the journey they describe. */
+.journey-wrap{ display:grid; grid-template-columns:1.32fr .68fr; gap:var(--s6); align-items:start; }
+.journey{ position:relative; }
+.journey::before{
+  content:''; position:absolute; left:23px; top:12px; bottom:12px; width:1px;
+  background:linear-gradient(180deg,var(--v),var(--c),transparent);
+}
+.step{ position:relative; padding-left:74px; }
+.step + .step{ margin-top:var(--s5); }
+.step .num{
+  position:absolute; left:0; top:0; width:48px; height:48px; border-radius:13px;
+  display:grid; place-items:center; background:var(--paper); border:1px solid var(--line);
+  font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:700; color:var(--i);
+  box-shadow:0 3px 14px rgba(13,14,26,.05);
+}
+.step.key .num{ background:var(--grad); color:#fff; border-color:transparent;
+  box-shadow:0 8px 26px rgba(124,58,237,.32); }
+.step h3{ margin-bottom:6px; }
+.step p{ font-size:14.5px; max-width:66ch; }
+.step .who{ font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.18em;
+  text-transform:uppercase; color:var(--faint); margin-top:9px; display:block; }
+
+.jshots{ display:grid; gap:var(--s2); position:sticky; top:var(--s5); }
+.jshot{ position:relative; border-radius:var(--r-lg); overflow:hidden; border:1px solid var(--line); background:#0a0a16; }
+.jshot img{ width:100%; height:100%; object-fit:cover; aspect-ratio:4/3; }
+.jshot.tall img{ aspect-ratio:1/1; }
+.jshot .cap{
+  position:absolute; left:0; right:0; bottom:0; padding:34px 16px 13px;
+  background:linear-gradient(180deg,transparent,rgba(5,5,15,.9));
+  font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.16em;
+  text-transform:uppercase; color:#cfd1ff;
+}
+
+/* ============================================================
+   ROLES
+   ============================================================ */
+.roles{ display:grid; grid-template-columns:repeat(4,1fr); gap:0;
+  border-top:1px solid var(--dark-line); border-bottom:1px solid var(--dark-line); }
+.role{ padding:var(--s4) var(--s3); }
+.role + .role{ border-left:1px solid var(--dark-line); }
+.role .k{ font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--c); }
+.role h4{ margin:12px 0 8px; font-size:17px; }
+.role p{ font-size:13.5px; }
+
+/* ============================================================
+   FEATURES — index + detail
+   ============================================================ */
+.feat-layout{ display:grid; grid-template-columns:236px 1fr; gap:var(--s6); align-items:start; }
+.feat-index{ position:sticky; top:var(--s5); }
+.feat-index .ttl{ font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--faint); margin-bottom:var(--s2); }
+.feat-index ol{ list-style:none; counter-reset:fi; border-left:1px solid var(--line); }
+.feat-index li{ counter-increment:fi; }
+.feat-index a{
+  display:flex; gap:10px; padding:7px 0 7px 14px; text-decoration:none;
+  color:var(--muted); font-size:13px; line-height:1.35; border-left:2px solid transparent;
+  margin-left:-1px; transition:color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
+}
+.feat-index a::before{
+  content:counter(fi,decimal-leading-zero);
+  font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--faint); flex:none; padding-top:1px;
+}
+.feat-index a:hover{ color:var(--ink); border-left-color:var(--v); }
+
+.module{ padding:var(--s4) 0; border-top:1px solid var(--line); }
+.module:first-child{ border-top:0; padding-top:0; }
+.module .mhead{ display:flex; align-items:baseline; gap:14px; }
+.module .mno{ font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700;
+  color:var(--v); flex:none; }
+.module h3{ letter-spacing:-.02em; }
+.module .purpose{ font-size:14.5px; color:var(--muted); margin:8px 0 var(--s3); max-width:70ch; }
+/* Column flow so the five items read down the left column then down the right,
+   rather than zig-zagging across rows. */
+.module ul{ list-style:none; display:grid; grid-template-columns:1fr 1fr;
+  grid-template-rows:repeat(3,auto); grid-auto-flow:column; gap:10px var(--s4); }
+.module li{ position:relative; padding-left:18px; font-size:14px; line-height:1.5; color:var(--ink2); }
+.module li::before{
+  content:''; position:absolute; left:0; top:8px; width:6px; height:6px; border-radius:2px;
+  background:var(--grad);
+}
+
+/* ============================================================
+   ARCHITECTURE
+   ============================================================ */
+.arch{ display:grid; gap:var(--s2); margin-top:var(--s3); }
+.layer{
+  border:1px solid var(--dark-line); border-radius:var(--r-md); padding:var(--s3);
+  background:rgba(255,255,255,.035);
+  display:grid; grid-template-columns:184px 1fr; gap:var(--s3); align-items:center;
+}
+.layer .lname{ }
+.layer .lname .k{ font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--c); }
+.layer .lname h4{ margin-top:6px; font-size:16px; }
+.layer .nodes{ display:flex; flex-wrap:wrap; gap:8px; }
+.node{
+  font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.02em;
+  border:1px solid rgba(255,255,255,.14); border-radius:8px; padding:7px 11px;
+  color:#d6d8f5; background:rgba(255,255,255,.04); white-space:nowrap;
+}
+.node.hot{ border-color:rgba(124,58,237,.5); background:rgba(124,58,237,.16); color:#d9c9ff; }
+.flowmark{ text-align:center; color:var(--dark-faint); font-size:14px; line-height:1; }
+
+/* ============================================================
+   STACK TABLES
+   ============================================================ */
+.split{ display:grid; grid-template-columns:.86fr 1.14fr; gap:var(--s6); align-items:start; }
+.split.flip{ grid-template-columns:1.14fr .86fr; }
+.spec{ width:100%; border-collapse:collapse; }
+.spec th{
+  text-align:left; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--faint); font-weight:500; padding:0 0 10px;
+  border-bottom:1px solid var(--line);
+}
+.spec td{ padding:14px 0; border-bottom:1px solid var(--line2); vertical-align:top; font-size:14px; }
+.spec td:first-child{ width:26%; font-weight:700; color:var(--ink); padding-right:var(--s2); }
+.spec td:nth-child(2){ width:32%; font-family:'JetBrains Mono',monospace; font-size:12.5px;
+  color:var(--i); padding-right:var(--s2); line-height:1.5; }
+.spec td:last-child{ color:var(--muted); font-size:13.5px; }
+.dark .spec th{ color:var(--dark-faint); border-color:var(--dark-line); }
+.dark .spec td{ border-color:rgba(255,255,255,.06); }
+.dark .spec td:first-child{ color:#fff; }
+.dark .spec td:nth-child(2){ color:#a78bfa; }
+.dark .spec td:last-child{ color:var(--dark-ink2); }
+
+.notecard{
+  border:1px solid var(--line); border-left:3px solid var(--v); border-radius:var(--r-md);
+  padding:var(--s3); background:var(--paper2); margin-top:var(--s4);
+}
+.notecard .k{ font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--v); }
+.notecard p{ font-size:13.5px; margin-top:8px; }
+
+/* ============================================================
+   AI PIPELINE
+   ============================================================ */
+.pipe{ display:grid; grid-template-columns:repeat(6,1fr); gap:0; margin-top:var(--s5);
+  border:1px solid var(--dark-line); border-radius:var(--r-lg); overflow:hidden; }
+.pstep{ padding:var(--s3) var(--s2); position:relative; }
+.pstep + .pstep{ border-left:1px solid var(--dark-line); }
+.pstep .n{ font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--c); letter-spacing:.16em; }
+.pstep h4{ font-size:14px; margin:10px 0 7px; }
+.pstep p{ font-size:12.5px; line-height:1.5; }
+.pstep.loop{ background:rgba(124,58,237,.12); }
+
+/* ============================================================
+   ENTITIES
+   ============================================================ */
+.ents{ display:grid; grid-template-columns:repeat(3,1fr); gap:var(--s2) var(--s5); margin-top:var(--s4); }
+.ent{ border-top:1px solid var(--line); padding-top:12px; }
+.ent .n{ font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:700; color:var(--i); }
+.ent .d{ font-size:12.5px; color:var(--muted); margin-top:4px; line-height:1.45; }
+
+/* ============================================================
+   CHECKLIST
+   ============================================================ */
+.checks{ display:grid; grid-template-columns:1fr 1fr; gap:0 var(--s6); }
+.check{ display:flex; gap:13px; padding:15px 0; border-bottom:1px solid var(--line2); }
+.check .ic{ width:19px; height:19px; border-radius:5px; flex:none; margin-top:2px;
+  background:rgba(124,58,237,.10); border:1px solid rgba(124,58,237,.28);
+  display:grid; place-items:center; }
+.check .ic::after{ content:''; width:8px; height:4.5px; border-left:1.8px solid var(--v);
+  border-bottom:1.8px solid var(--v); transform:rotate(-45deg) translate(1px,-1px); }
+.check .tx b{ display:block; font-size:14.5px; }
+.check .tx span{ font-size:13px; color:var(--muted); }
+
+/* ============================================================
+   GANTT
+   ============================================================ */
+.gantt{ margin-top:var(--s5); }
+.gscale{ display:grid; grid-template-columns:190px repeat(12,1fr); gap:0;
+  padding-bottom:10px; border-bottom:1px solid var(--dark-line); }
+.gscale .lb{ font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.18em;
+  text-transform:uppercase; color:var(--dark-faint); }
+.gscale .w{ font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--dark-faint);
+  text-align:center; }
+.gscale .w.split-l{ box-shadow:inset 1px 0 0 rgba(167,139,250,.5); }
+.grow{ display:grid; grid-template-columns:190px repeat(12,1fr); align-items:center;
+  padding:11px 0; border-bottom:1px solid rgba(255,255,255,.055); }
+.grow .name{ padding-right:var(--s2); }
+.grow .name b{ display:block; font-size:13.5px; color:#fff; font-weight:700; }
+.grow .name span{ font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--dark-faint);
+  letter-spacing:.14em; text-transform:uppercase; }
+.bar{ grid-column:var(--from) / var(--to); height:26px; border-radius:7px;
+  background:var(--grad); display:flex; align-items:center; padding:0 10px;
+  font-family:'JetBrains Mono',monospace; font-size:10px; color:#fff; letter-spacing:.06em;
+  transform-origin:0 50%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.js-motion .bar{ transform:scaleX(0); }
+.js-motion .bar.in{ transform:none; transition:transform 700ms var(--ease) var(--d,0ms); }
+.bar.test{ background:linear-gradient(120deg,#18bccf,#3a33c9); }
+.bar.ghost{ background:rgba(255,255,255,.08); border:1px dashed rgba(255,255,255,.22); color:#b4b7d4; }
+.phaselegend{ display:flex; gap:var(--s4); margin-top:var(--s4); flex-wrap:wrap; }
+.phaselegend .li{ display:flex; align-items:center; gap:9px;
+  font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--dark-ink2); }
+.phaselegend .sw{ width:22px; height:9px; border-radius:3px; }
+
+.miles{ display:grid; grid-template-columns:repeat(6,1fr); gap:var(--s2); margin-top:var(--s5); }
+.mile{ border:1px solid var(--dark-line); border-radius:var(--r-md); padding:15px;
+  background:rgba(255,255,255,.035); }
+.mile .k{ font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.12em;
+  color:var(--c); }
+.mile b{ display:block; font-size:13px; margin-top:8px; color:#fff; line-height:1.35; }
+.mile span{ font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--dark-faint);
+  display:block; margin-top:7px; }
+
+/* ============================================================
+   SPRINT DETAIL
+   ============================================================ */
+.sprints{ display:grid; grid-template-columns:1fr 1fr; gap:var(--s2); }
+.sprint{ border:1px solid var(--line); border-radius:var(--r-lg); padding:var(--s4); background:var(--paper); }
+.sprint.testp{ background:var(--paper2); border-color:var(--line); }
+.sprint .top{ display:flex; align-items:baseline; justify-content:space-between; gap:var(--s2); }
+.sprint .wk{ font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.18em;
+  text-transform:uppercase; color:var(--v); }
+.sprint h3{ margin:10px 0 var(--s2); font-size:19px; }
+.sprint ul{ list-style:none; }
+.sprint li{ position:relative; padding-left:17px; font-size:13.5px; line-height:1.5; color:var(--ink2); }
+.sprint li + li{ margin-top:8px; }
+.sprint li::before{ content:''; position:absolute; left:0; top:8px; width:5px; height:5px;
+  border-radius:50%; background:var(--v); }
+.sprint .exit{ margin-top:var(--s3); padding-top:var(--s2); border-top:1px dashed var(--line);
+  font-size:12.5px; color:var(--muted); }
+.sprint .exit b{ font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.18em;
+  text-transform:uppercase; color:var(--i); display:block; margin-bottom:5px; }
+
+
+/* ============================================================
+   RISK TABLE
+   ============================================================ */
+.risk{ width:100%; border-collapse:collapse; margin-top:var(--s4); }
+.risk th{ text-align:left; font-family:'JetBrains Mono',monospace; font-size:11px;
+  letter-spacing:.2em; text-transform:uppercase; color:var(--faint); font-weight:500;
+  padding:0 var(--s2) 11px 0; border-bottom:1px solid var(--line); }
+.risk td{ padding:16px var(--s2) 16px 0; border-bottom:1px solid var(--line2);
+  vertical-align:top; font-size:13.5px; color:var(--ink2); }
+.risk td:first-child{ font-weight:700; color:var(--ink); width:24%; }
+.risk td:last-child{ padding-right:0; }
+.lvl{ font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.14em;
+  text-transform:uppercase; padding:3px 8px; border-radius:99px; white-space:nowrap; }
+.lvl.h{ color:#b42318; background:rgba(239,68,68,.10); border:1px solid rgba(239,68,68,.25); }
+.lvl.m{ color:#a15c07; background:rgba(245,158,11,.10); border:1px solid rgba(245,158,11,.28); }
+.lvl.l{ color:#067647; background:rgba(16,185,129,.10); border:1px solid rgba(16,185,129,.25); }
+
+/* ============================================================
+   TWO-COL LISTS
+   ============================================================ */
+.twocol{ display:grid; grid-template-columns:1fr 1fr; gap:var(--s6); margin-top:var(--s4); }
+.listblock .k{ font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--i); padding-bottom:12px; border-bottom:1px solid var(--line);
+  display:block; }
+.listblock ul{ list-style:none; margin-top:var(--s2); }
+.listblock li{ position:relative; padding-left:19px; font-size:13.5px; line-height:1.55; color:var(--ink2); }
+.dark .listblock li{ color:var(--dark-ink2); }
+.listblock li + li{ margin-top:10px; }
+.listblock li::before{ content:''; position:absolute; left:0; top:9px; width:7px; height:1.5px;
+  background:var(--faint); }
+.dark .listblock li::before{ background:var(--c); }
+
+/* ============================================================
+   CLOSE
+   ============================================================ */
+.close{ background:
+    radial-gradient(46% 44% at 82% 10%, rgba(124,58,237,.20), transparent 70%),
+    radial-gradient(40% 40% at 8% 92%, rgba(24,188,207,.12), transparent 70%),
+    var(--dark); }
+.next{ display:grid; grid-template-columns:repeat(4,1fr); gap:var(--s2); margin-top:var(--s5); }
+.nx{ border:1px solid var(--dark-line); border-radius:var(--r-md); padding:var(--s3);
+  background:rgba(255,255,255,.035); }
+.nx .n{ font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--c); }
+.nx b{ display:block; font-size:14px; color:#fff; margin:9px 0 6px; }
+.nx p{ font-size:12.5px; }
+
+.signoff{ display:grid; grid-template-columns:1fr 1fr; gap:var(--s6); margin-top:var(--s7);
+  padding-top:var(--s4); border-top:1px solid var(--dark-line); }
+.sig .k{ font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--dark-faint); }
+.sig .line{ height:1px; background:rgba(255,255,255,.22); margin:var(--s5) 0 10px; }
+.sig .who{ font-size:14px; color:#fff; font-weight:700; }
+.sig .sub{ font-size:12px; color:var(--dark-faint); }
+
+footer{ padding:var(--s4) 0 var(--s5); background:var(--dark); }
+footer .fbar{ display:flex; justify-content:space-between; align-items:center; gap:var(--s3);
+  flex-wrap:wrap; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--dark-faint); }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width:1080px){
+  .cover-grid,.plain-grid,.split,.split.flip,.journey-wrap{ grid-template-columns:1fr; gap:var(--s5); }
+  .jshots{ position:static; grid-template-columns:repeat(3,1fr); }
+  .feat-layout{ grid-template-columns:1fr; }
+  .feat-index{ position:static; display:none; }
+  .roles,.tiles,.miles,.next{ grid-template-columns:repeat(2,1fr); }
+  .role + .role{ border-left:0; }
+  .role:nth-child(2n){ border-left:1px solid var(--dark-line); }
+  .pipe,.ents{ grid-template-columns:repeat(2,1fr); }
+  .pstep + .pstep{ border-left:0; }
+  .pstep:nth-child(2n){ border-left:1px solid var(--dark-line); }
+}
+@media (max-width:760px){
+  section{ padding:var(--s7) 0; }
+  .wrap{ padding:0 var(--s3); }
+  .sec-head{ flex-direction:column; gap:var(--s1); }
+  .sec-no{ padding-top:0; }
+  .compare,.module ul,.checks,.sprints,.twocol,.jshots{ grid-template-columns:1fr; }
+  .module ul{ grid-auto-flow:row; grid-template-rows:none; }
+  .compare .col:first-child{ border-right:0; border-bottom:1px solid var(--line); }
+  .tiles,.roles,.miles,.next,.pipe,.ents{ grid-template-columns:1fr; }
+  .role + .role,.role:nth-child(2n){ border-left:0; border-top:1px solid var(--dark-line); }
+  .pstep + .pstep,.pstep:nth-child(2n){ border-left:0; border-top:1px solid var(--dark-line); }
+  .party{ grid-template-columns:1fr; max-width:none; }
+  .layer{ grid-template-columns:1fr; gap:var(--s2); }
+  .viewport{ min-width:0; }
+  .viewport .chrome{ font-size:9px; letter-spacing:.1em; gap:6px; padding:0 10px; }
+  .viewport .chrome .right{ display:none; }
+  /* Spec tables become stacked rows rather than a squeezed three-column grid. */
+  .spec, .spec tbody, .spec tr, .spec td{ display:block; width:auto; }
+  .spec thead{ display:none; }
+  .spec tr{ padding:14px 0; border-bottom:1px solid var(--line2); }
+  .spec td{ border:0; padding:0; width:auto !important; }
+  .spec td:first-child{ font-size:15px; padding-right:0; }
+  .spec td:nth-child(2){ margin:4px 0 6px; padding-right:0; }
+  .risk td:first-child{ width:auto; }
+  .gscale,.grow{ grid-template-columns:120px repeat(12,1fr); }
+  .grow .name b{ font-size:12px; }
+  .bar{ font-size:0; padding:0 4px; }
+  .gantt{ overflow-x:auto; }
+  .signoff{ grid-template-columns:1fr; }
+}
+
+/* ============================================================
+   MOTION OPT-OUT
+   ============================================================ */
+@media (prefers-reduced-motion: reduce){
+  html{ scroll-behavior:auto; }
+  *,*::before,*::after{
+    animation-duration:.001ms !important; animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;
+  }
+  .js-motion .rv{ opacity:1; transform:none; }
+  .js-motion .bar{ transform:none; }
+  .det,.viewport .verdict{ opacity:1; }
+  .scan{ display:none; }
+}
+
+/* ============================================================
+   PRINT — A4 export
+   ============================================================ */
+@media print{
+  @page{ size:A4; margin:12mm 11mm; }
+  html,body{ background:#fff; font-size:9.6px; }
+  *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  .progress,.scrollcue,.scan{ display:none !important; }
+  .rv,.js-motion .rv{ opacity:1 !important; transform:none !important; }
+  .bar,.js-motion .bar{ transform:none !important; }
+  .det,.viewport .verdict{ opacity:1 !important; animation:none !important; }
+  /* Sections flow across pages; only self-contained blocks are kept whole. */
+  section{ padding:9mm 0; break-inside:auto; }
+  section.tight{ padding:8mm 0; }
+  .cover{ min-height:auto; padding:0 0 10mm; break-after:page; }
+  .sec-head{ margin-bottom:7mm; break-after:avoid; }
+  h2,h3{ break-after:avoid; }
+  .module,.sprint,.mile,.step,.tile,.layer,.jshot,.check,.nx,.tm,.role,.pstep,
+  .ent,.compare,.outputs > div,.risk tr{ break-inside:avoid; }
+  .wrap{ max-width:100%; padding:0; }
+  .feat-index{ display:none; }
+  .feat-layout{ grid-template-columns:1fr; }
+  .jshots{ position:static; grid-template-columns:repeat(3,1fr); }
+  .journey-wrap{ grid-template-columns:1fr; gap:8mm; }
+  .cover-grid{ gap:8mm; }
+  h1{ font-size:34pt; }
+  /* Apple's PDF viewers can paint a solid box over gradient-clipped text; the
+     wordmark falls back to the ring's violet for the printed/exported copy. */
+  .lock .word{ background:none !important; -webkit-text-fill-color:#a78bfa !important;
+    color:#a78bfa !important; }
+  .dark,.close,footer{ background:#05050f !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress"><i id="pbar"></i></div>
+
+<!-- ============================================================
+     COVER
+     ============================================================ -->
+<section class="cover dark">
+  <div class="wrap">
+    <div class="cover-grid">
+      <div>
+        <div class="lock rv">
+          <svg class="mark" viewBox="0 0 179 100" role="img" aria-label="Pixorama">
+            <defs>
+              <linearGradient id="pxo" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#4f2fdb" />
+                <stop offset=".55" stop-color="#7c3aed" />
+                <stop offset="1" stop-color="#c13ccf" />
+              </linearGradient>
+            </defs>
+            <rect x="0" y="0" width="100" height="100" rx="27" fill="url(#pxo)" />
+            <text x="50" y="50" fill="#fff" font-family="Manrope,sans-serif" font-size="44"
+                  font-weight="800" letter-spacing="-1" text-anchor="middle"
+                  dominant-baseline="central">PX</text>
+            <circle cx="142" cy="50" r="30" fill="none" stroke="#6d55e8" stroke-width="13" />
+          </svg>
+          <span class="word">Pixorama<em>.</em></span>
+        </div>
+
+        <div class="eyebrow rv" style="--d:60ms; margin-top:40px">Platform Proposal · 2026</div>
+        <h1 class="rv" style="--d:120ms">AI Device<br>Inspector<span class="l2">Platform.</span></h1>
+        <p class="lead rv" style="--d:180ms">
+          Photograph a laptop, let the model find the damage, and get a defensible grade in
+          under a minute — with every decision recorded.
+        </p>
+
+        <div class="party rv" style="--d:240ms">
+          <div class="box">
+            <div class="k">Prepared for</div>
+            <div class="v">Hugo Martinez</div>
+            <div class="s">Project sponsor</div>
+          </div>
+          <div class="box">
+            <div class="k">Prepared by</div>
+            <div class="v">Pixorama Group</div>
+            <div class="s">Product engineering</div>
+          </div>
+        </div>
+
+        <div class="metarail rv" style="--d:300ms">
+          <div class="m"><div class="n" data-count="12">12</div><div class="l">Weeks total</div></div>
+          <div class="m"><div class="n" data-count="8">8</div><div class="l">Weeks build</div></div>
+          <div class="m"><div class="n" data-count="4">4</div><div class="l">Weeks test</div></div>
+          <div class="m"><div class="n" data-count="12">12</div><div class="l">Modules</div></div>
+          <div class="m"><div class="n" data-count="60">60</div><div class="l">Features</div></div>
+        </div>
+      </div>
+
+      <!-- signature moment -->
+      <div class="viewport rv" style="--d:200ms">
+        <div class="chrome">
+          <span class="dot"></span> Station 04 · Front Camera
+          <span class="right">INS-49001 · Model v2.4.1</span>
+        </div>
+        <img class="shot" src="assets/ins49001-front.png" alt="Intake photograph of a laptop with thermal damage to the chassis" />
+        <div class="scan"></div>
+        <div class="det a"><span class="tag">Thermal Failure · 99%</span></div>
+        <div class="det b"><span class="tag">Bent Chassis · 91%</span></div>
+        <div class="det c"><span class="tag">Chipped Casing · 84%</span></div>
+        <div class="verdict"><span class="pill">F</span> Grade · <b>Recycle</b></div>
+      </div>
+    </div>
+  </div>
+  <div class="scrollcue">Scroll<i></i></div>
+</section>
+
+<!-- ============================================================
+     01 · PLAIN ENGLISH
+     ============================================================ -->
+<section id="plain">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="sec-no">01</div>
+      <div class="t">
+        <div class="eyebrow">In plain English</div>
+        <h2>What this platform actually does</h2>
+      </div>
+    </div>
+
+    <div class="plain-grid">
+      <div class="rv">
+        <div class="bigstate">A used laptop goes in. A trusted grade, a photo record and a price signal come out.</div>
+        <div class="rule" style="margin-top:24px"></div>
+
+        <dl class="outputs">
+          <div><dt>Cosmetic &amp; functional grade</dt><dd>A–F, from one rule set</dd></div>
+          <div><dt>Health score</dt><dd>0–100, weighted by defect</dd></div>
+          <div><dt>Photographic evidence</dt><dd>Six angles, defects marked</dd></div>
+          <div><dt>Recommended disposition</dt><dd>Resell · repair · parts · recycle</dd></div>
+          <div><dt>Audit trail</dt><dd>Every decision, attributable</dd></div>
+        </dl>
+      </div>
+
+      <div class="plain-body rv" style="--d:80ms">
+        <p class="lead">
+          Refurbishment centres take in thousands of second-hand devices. Someone has to
+          decide what condition each one is in — is it a clean resale, does it need a
+          repair, or is it only worth parts? That decision sets the price.
+        </p>
+        <p style="margin-top:20px">
+          Today that job is done by eye. An operator turns the laptop over, notes the
+          scratches on a form, guesses a grade, and moves on. Two people looking at the
+          same device often disagree. When a buyer complains, there is no evidence to
+          point at — just a line in a spreadsheet.
+        </p>
+        <p>
+          This platform replaces the eye with a camera booth and a trained model. The
+          operator scans the serial, the device is photographed from six angles, and the
+          model marks every defect it finds — scratches, dents, cracked screens, missing
+          keys, swollen batteries — with a confidence score and a severity. The operator
+          confirms or corrects what they see, and the system produces a grade, a health
+          score, and a printable report with the photos attached.
+        </p>
+        <p>
+          The result is that grading stops depending on who is working that shift. It
+          becomes consistent, fast, and — because every click is logged — something you
+          can defend to a buyer, an auditor, or an insurer.
+        </p>
+      </div>
+    </div>
+
+    <div class="compare rv" style="--d:120ms">
+      <div class="col">
+        <div class="h"><span class="dot" style="background:var(--faint)"></span><span class="lbl">How it works today</span></div>
+        <ul>
+          <li>Grading is a judgement call — the same laptop gets a B from one operator and a C from another.</li>
+          <li>Condition notes live in a spreadsheet with no photographs attached to them.</li>
+          <li>A buyer dispute takes hours to investigate and usually ends in a credit note.</li>
+          <li>Nobody can tell you which supplier or model is sending in the worst stock.</li>
+          <li>Training a new operator to grade reliably takes weeks.</li>
+        </ul>
+      </div>
+      <div class="col good">
+        <div class="h"><span class="dot" style="background:var(--v)"></span><span class="lbl">How it works on the platform</span></div>
+        <ul>
+          <li>One model applies one rule set to every device, on every shift, in every facility.</li>
+          <li>Six photographs and a marked-up defect map are attached to every record, permanently.</li>
+          <li>A dispute is answered by sending a link to the inspection — photos, defects, grade, and who signed it off.</li>
+          <li>Defect trends by model, supplier and intake batch are visible from day one.</li>
+          <li>A new operator follows a guided six-step flow and is productive on their first day.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tiles">
+      <div class="tile rv"><div class="n" data-count="60" data-suffix="s">60s</div><div class="l">Capture to grade, per device</div><span class="tagx">Target</span></div>
+      <div class="tile rv" style="--d:60ms"><div class="n" data-count="6">6</div><div class="l">Camera angles per inspection</div><span class="tagx">Fixed rig</span></div>
+      <div class="tile rv" style="--d:120ms"><div class="n" data-count="90" data-suffix="%">90%</div><div class="l">Detection recall on top defect classes</div><span class="tagx">Acceptance gate</span></div>
+      <div class="tile rv" style="--d:180ms"><div class="n" data-count="100" data-suffix="%">100%</div><div class="l">Grade changes carrying an audit entry</div><span class="tagx">Non-negotiable</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     02 · USE CASE
+     ============================================================ -->
+<section id="usecase" class="tint">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="sec-no">02</div>
+      <div class="t">
+        <div class="eyebrow">The use case</div>
+        <h2>One device, end to end</h2>
+        <p class="lead">
+          This is the journey the whole product is built around. Everything else in the
+          feature list exists to make one of these seven steps faster, more accurate, or
+          provable after the fact.
+        </p>
+      </div>
+    </div>
+
+    <div class="journey-wrap">
+    <div class="journey">
+      <div class="step rv">
+        <div class="num">01</div>
+        <h3>Intake &amp; identification</h3>
+        <p>A pallet arrives. The operator scans the barcode or lets the camera read the
+        service tag. The platform pulls the model, original spec and any prior inspection
+        history for that serial, so a device that has been round the loop before is flagged
+        immediately.</p>
+        <span class="who">Operator · 5 seconds</span>
+      </div>
+
+      <div class="step rv">
+        <div class="num">02</div>
+        <h3>Guided positioning</h3>
+        <p>The device is placed in the booth. On-screen guides show the operator exactly
+        where it goes, lid open or closed, for the model in question. The station checks
+        lighting and focus before it will let the capture start.</p>
+        <span class="who">Operator · 10 seconds</span>
+      </div>
+
+      <div class="step rv key">
+        <div class="num">03</div>
+        <h3>Six-angle capture</h3>
+        <p>One trigger fires the whole array — top, bottom, left, right, front and keyboard.
+        Blurred or over-exposed frames are rejected on the spot and re-shot, so a bad photo
+        never becomes a bad grade.</p>
+        <span class="who">Automated · 8 seconds</span>
+      </div>
+
+      <div class="step rv key">
+        <div class="num">04</div>
+        <h3>AI analysis</h3>
+        <p>Images go to the inference service. The model segments each defect, classifies it
+        against the taxonomy, scores its confidence and assigns a severity. A heat map and a
+        set of bounding regions come back attached to the record.</p>
+        <span class="who">Automated · 12 seconds</span>
+      </div>
+
+      <div class="step rv key">
+        <div class="num">05</div>
+        <h3>Operator review</h3>
+        <p>The operator sees the marked-up photographs. They accept what is right, reject
+        false positives, merge duplicates, resize a region that is slightly off, or draw a
+        new one for something the model missed. Every one of those actions is written to the
+        audit trail with a before and after value.</p>
+        <span class="who">Operator · 20 seconds</span>
+      </div>
+
+      <div class="step rv">
+        <div class="num">06</div>
+        <h3>Grade &amp; disposition</h3>
+        <p>The grading engine turns the confirmed defect set into a cosmetic grade, a
+        functional grade and a health score, using the rule profile for that buyer. It
+        recommends resell, repair, parts or recycle. A supervisor can override, but only
+        with a reason attached.</p>
+        <span class="who">Automated + Supervisor · 5 seconds</span>
+      </div>
+
+      <div class="step rv">
+        <div class="num">07</div>
+        <h3>Report, hand-off &amp; feedback</h3>
+        <p>A branded PDF certificate is generated and the record is pushed to the ERP by
+        webhook. The buyer gets a read-only link. Meanwhile every operator correction is
+        added to the training set, so next month's model is measurably better than this
+        month's.</p>
+        <span class="who">Automated · instant</span>
+      </div>
+    </div>
+
+      <div class="jshots">
+        <div class="jshot rv">
+          <img src="assets/ins49001-bottom.png" alt="Underside of a laptop chassis captured by the inspection rig, showing thermal damage" />
+          <div class="cap">Bottom camera · chassis &amp; vents</div>
+        </div>
+        <div class="jshot tall rv" style="--d:80ms">
+          <img src="assets/ins49001-keyboard.jpg" alt="Keyboard of a laptop captured by the inspection rig, showing missing and damaged keys" />
+          <div class="cap">Keyboard camera · key &amp; palmrest wear</div>
+        </div>
+        <div class="jshot rv" style="--d:160ms">
+          <img src="assets/ins49001-top.jpg" alt="Lid of a laptop captured by the inspection rig" />
+          <div class="cap">Top camera · lid &amp; hinge</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     03 · ROLES
+     ============================================================ -->
+<section id="roles" class="dark tight">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="sec-no" style="color:var(--dark-faint)">03</div>
+      <div class="t">
+        <div class="eyebrow">Who uses it</div>
+        <h2>Four people, four different products</h2>
+        <p class="lead">The same data, surfaced very differently depending on who is looking.
+        Permissions are enforced in the API, not just hidden in the interface.</p>
+      </div>
+    </div>
+
+    <div class="roles rv">
+      <div class="role">
+        <div class="k">Role 01</div>
+        <h4>Operator</h4>
+        <p>Lives in the station screen. Scans, captures, reviews detections. Needs speed,
+        big hit targets and a flow that works with gloves on and a queue behind them.</p>
+      </div>
+      <div class="role">
+        <div class="k">Role 02</div>
+        <h4>Supervisor</h4>
+        <p>Watches the floor in real time, picks up low-confidence and disputed inspections,
+        approves grade overrides, and answers buyer queries with evidence.</p>
+      </div>
+      <div class="role">
+        <div class="k">Role 03</div>
+        <h4>Administrator</h4>
+        <p>Configures clients, stations, users, defect taxonomy and grading profiles. Owns
+        the integrations, retention policy and the audit export.</p>
+      </div>
+      <div class="role">
+        <div class="k">Role 04</div>
+        <h4>Client / buyer</h4>
+        <p>Read-only. Sees their own consignments, the grades and the photographic evidence.
+        Never sees another client's data — isolation is enforced at the database row.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     04 · FEATURE LIST
+     ============================================================ -->
+<section id="features">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="sec-no">04</div>
+      <div class="t">
+        <div class="eyebrow">Scope</div>
+        <h2>The feature list</h2>
+        <p class="lead">
+          Twelve modules, sixty features. This is the full v1 scope — everything below is
+          committed to the eight-week build and verified in the four-week test window.
+          Anything not on this list is a change request, not an assumption.
+        </p>
+      </div>
+    </div>
+
+    <div class="feat-layout">
+      <nav class="feat-index">
+        <div class="ttl">Modules</div>
+        <ol>
+          <li><a href="#m01">Access, roles &amp; tenancy</a></li>
+          <li><a href="#m02">Dashboard &amp; live floor</a></li>
+          <li><a href="#m03">Inspection station</a></li>
+          <li><a href="#m04">AI detection engine</a></li>
+          <li><a href="#m05">AI review &amp; annotation</a></li>
+          <li><a href="#m06">Grading &amp; disposition</a></li>
+          <li><a href="#m07">Inspection history</a></li>
+          <li><a href="#m08">Records &amp; reporting</a></li>
+          <li><a href="#m09">Data in / out</a></li>
+          <li><a href="#m10">Analytics</a></li>
+          <li><a href="#m11">Administration</a></li>
+          <li><a href="#m12">Audit &amp; compliance</a></li>
+        </ol>
+      </nav>
+
+      <div class="modules">
+        <article class="module rv" id="m01">
+          <div class="mhead"><span class="mno">01</span><h3>Access, roles &amp; tenancy</h3></div>
+          <p class="purpose">Who can see what, across multiple client accounts on one deployment.</p>
+          <ul>
+            <li>Email &amp; password sign-in with optional two-factor</li>
+            <li>Enterprise SSO via SAML 2.0 / OIDC (Entra ID, Okta)</li>
+            <li>Four roles — Operator, Supervisor, Admin, Client — with a published permission matrix</li>
+            <li>Multi-tenant isolation enforced with Postgres row-level security</li>
+            <li>Station kiosk sessions: device-bound tokens, idle lock, fast operator switch</li>
+          </ul>
+        </article>
+
+        <article class="module rv" id="m02">
+          <div class="mhead"><span class="mno">02</span><h3>Dashboard &amp; live floor</h3></div>
+          <p class="purpose">One screen that tells a supervisor whether today is going well.</p>
+          <ul>
+            <li>Live station tiles — idle, capturing, analysing, needs review, fault</li>
+            <li>Shift KPIs: units processed, average cycle time, first-pass yield, rework rate</li>
+            <li>Throughput trend and defect-mix charts, click-through to a filtered list</li>
+            <li>Alert feed for offline stations, calibration due and low-confidence runs</li>
+            <li>Operator activity summary for the current shift</li>
+          </ul>
+        </article>
+
+        <article class="module rv" id="m03">
+          <div class="mhead"><span class="mno">03</span><h3>Inspection station</h3></div>
+          <p class="purpose">The capture workflow the operator actually spends their day in.</p>
+          <ul>
+            <li>Six-state guided flow: scan → verify → position → capture → analyse → review</li>
+            <li>Barcode / QR scan plus OCR service-tag reading, with manual entry fallback</li>
+            <li>Automatic device lookup: model, spec, prior inspections, warranty status</li>
+            <li>Six-camera trigger with per-angle retake, focus and exposure validation</li>
+            <li>Offline-tolerant: captures queue locally and sync when the network returns</li>
+          </ul>
+        </article>
+
+        <article class="module rv" id="m04">
+          <div class="mhead"><span class="mno">04</span><h3>AI detection engine</h3></div>
+          <p class="purpose">The model layer — what it looks for and how sure it is.</p>
+          <ul>
+            <li>Instance segmentation and classification across cosmetic, display and hardware defects</li>
+            <li>Taxonomy of 20+ classes: scratch, dent, crack, chip, bent chassis, missing key, dead pixel, backlight bleed, hinge play, port damage, corrosion, thermal failure</li>
+            <li>Per-detection confidence, four-level severity, bounding region and heat map</li>
+            <li>Configurable confidence thresholds with auto-escalation to supervisor review</li>
+            <li>Model versioning — every result is stamped with the exact model that produced it</li>
+          </ul>
+        </article>
+
+        <article class="module rv" id="m05">
+          <div class="mhead"><span class="mno">05</span><h3>AI review &amp; annotation</h3></div>
+          <p class="purpose">Human-in-the-loop correction, without slowing the line down.</p>
+          <ul>
+            <li>Annotated viewer with bounding boxes, heat map toggle and zoom-to-defect</li>
+            <li>Accept, reject, reclassify, change severity, merge duplicate detections</li>
+            <li>Cursor tool bubble — resize an AI region or draw a missed one directly on the photo</li>
+            <li>Low-confidence queue with second-opinion routing to a supervisor</li>
+            <li>Every correction written to the audit trail and fed back into the training set</li>
+          </ul>
+        </article>
+
+        <article class="module rv" id="m06">
+          <div class="mhead"><span class="mno">06</span><h3>Grading &amp; disposition</h3></div>
+          <p class="purpose">Turning a confirmed defect set into a commercial decision.</p>
+          <ul>
+            <li>Separate cosmetic and functional grades (A–F) from a configurable rule set</li>
+            <li>Weighted health score, 0–100, with the contributing defects shown</li>
+            <li>Per-client grading profiles — one buyer's B is another buyer's C</li>
+            <li>Suggested disposition: resell, repair, harvest for parts, or recycle</li>
+            <li>Supervisor override with mandatory reason code, captured in the record</li>
+          </ul>
+        </article>
+
+        <article class="module rv" id="m07">
+          <div class="mhead"><span class="mno">07</span><h3>Inspection history</h3></div>
+          <p class="purpose">Finding any device, out of hundreds of thousands, in seconds.</p>
+          <ul>
+            <li>Sixteen-column data grid, virtualised for 100k+ records</li>
+            <li>Global search plus advanced filters with saved, shareable presets</li>
+            <li>Bulk actions: approve, reject, assign, archive, re-run AI, export</li>
+            <li>Inline editing gated by role, with per-field permission checks</li>
+            <li>Column chooser, density toggle and per-user saved views</li>
+          </ul>
+        </article>
+
+        <article class="module rv" id="m08">
+          <div class="mhead"><span class="mno">08</span><h3>Records &amp; reporting</h3></div>
+          <p class="purpose">The evidence pack that settles a dispute.</p>
+          <ul>
+            <li>Tabbed record: overview, images, AI results, audit trail, edit</li>
+            <li>Full-resolution image viewer with drag-to-reorder image sets</li>
+            <li>Branded PDF certificate — grade, defects, photographs, operator, model version</li>
+            <li>Expiring read-only share link for buyers and insurers</li>
+            <li>Tamper-evident content hash printed on every certificate</li>
+          </ul>
+        </article>
+
+        <article class="module rv" id="m09">
+          <div class="mhead"><span class="mno">09</span><h3>Data in / out</h3></div>
+          <p class="purpose">The platform has to live inside your existing systems, not beside them.</p>
+          <ul>
+            <li>Five-step CSV import wizard: template, mapping, validation, preview, commit</li>
+            <li>Export to CSV, XLSX, PDF and JSON, filtered or bulk-selected</li>
+            <li>Documented REST API with OpenAPI spec and signed webhooks</li>
+            <li>ERP / WMS connector plus label printing (ZPL) from the station</li>
+            <li>Scheduled buyer feeds pushed to SFTP or S3 on a cron</li>
+          </ul>
+        </article>
+
+        <article class="module rv" id="m10">
+          <div class="mhead"><span class="mno">10</span><h3>Analytics</h3></div>
+          <p class="purpose">Answering "where are we losing money?" rather than "how many did we do?".</p>
+          <ul>
+            <li>Throughput, cycle time, first-pass yield and rework, by station and shift</li>
+            <li>Grade distribution over time, by model and by intake batch</li>
+            <li>Defect Pareto by supplier — which source is sending the worst stock</li>
+            <li>AI-versus-human agreement rate and the most common override reasons</li>
+            <li>Custom date ranges, CSV export and a scheduled email digest</li>
+          </ul>
+        </article>
+
+        <article class="module rv" id="m11">
+          <div class="mhead"><span class="mno">11</span><h3>Administration</h3></div>
+          <p class="purpose">Configuration your team owns, without calling us.</p>
+          <ul>
+            <li>Client, user, role and station management with camera calibration profiles</li>
+            <li>Defect taxonomy and severity-rule editor</li>
+            <li>Grading profile builder with a live preview against historic records</li>
+            <li>Notification rules and per-client report branding</li>
+            <li>Feature flags per tenant for staged rollout</li>
+          </ul>
+        </article>
+
+        <article class="module rv" id="m12">
+          <div class="mhead"><span class="mno">12</span><h3>Audit &amp; compliance</h3></div>
+          <p class="purpose">Being able to prove, months later, exactly what happened.</p>
+          <ul>
+            <li>Immutable audit log — actor, action, before, after, timestamp — fully exportable</li>
+            <li>Per-client retention and purge policy with a right-to-erasure workflow</li>
+            <li>Encryption in transit and at rest, with a documented key rotation policy</li>
+            <li>Field-level redaction for client-role users</li>
+            <li>SOC 2-aligned control set with evidence export for auditors</li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     05 · ARCHITECTURE
+     ============================================================ -->
+<section id="architecture" class="dark">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="sec-no" style="color:var(--dark-faint)">05</div>
+      <div class="t">
+        <div class="eyebrow">How it is put together</div>
+        <h2>System architecture</h2>
+        <p class="lead">
+          A cloud control plane for records, reporting and admin — plus an on-site edge node
+          per facility that owns the cameras and runs inference. If the internet drops, the
+          line keeps moving.
+        </p>
+      </div>
+    </div>
+
+    <div class="arch">
+      <div class="layer rv">
+        <div class="lname"><div class="k">Layer 01</div><h4>Clients</h4></div>
+        <div class="nodes">
+          <span class="node hot">Station kiosk (touch)</span>
+          <span class="node">Back-office web app</span>
+          <span class="node">Client portal (read-only)</span>
+          <span class="node">Barcode scanner / foot pedal</span>
+          <span class="node">Label printer</span>
+        </div>
+      </div>
+      <div class="flowmark">↓</div>
+
+      <div class="layer rv" style="--d:60ms">
+        <div class="lname"><div class="k">Layer 02</div><h4>Edge node · on site</h4></div>
+        <div class="nodes">
+          <span class="node">Camera controller (6× GigE)</span>
+          <span class="node">Capture service</span>
+          <span class="node hot">GPU inference worker</span>
+          <span class="node">Local image cache</span>
+          <span class="node">Offline sync queue</span>
+        </div>
+      </div>
+      <div class="flowmark">↓</div>
+
+      <div class="layer rv" style="--d:120ms">
+        <div class="lname"><div class="k">Layer 03</div><h4>Core API</h4></div>
+        <div class="nodes">
+          <span class="node hot">NestJS · TypeScript</span>
+          <span class="node">REST + OpenAPI</span>
+          <span class="node">WebSocket gateway</span>
+          <span class="node">BullMQ job queue</span>
+          <span class="node">Webhook outbox</span>
+          <span class="node">PDF render worker</span>
+        </div>
+      </div>
+      <div class="flowmark">↓</div>
+
+      <div class="layer rv" style="--d:180ms">
+        <div class="lname"><div class="k">Layer 04</div><h4>Data &amp; models</h4></div>
+        <div class="nodes">
+          <span class="node hot">PostgreSQL 16 · RLS</span>
+          <span class="node">S3 / MinIO object store</span>
+          <span class="node">Redis</span>
+          <span class="node">MLflow model registry</span>
+          <span class="node">Training data lake</span>
+        </div>
+      </div>
+      <div class="flowmark">↓</div>
+
+      <div class="layer rv" style="--d:240ms">
+        <div class="lname"><div class="k">Layer 05</div><h4>Platform</h4></div>
+        <div class="nodes">
+          <span class="node">Docker · Compose / K8s</span>
+          <span class="node">Terraform</span>
+          <span class="node">GitHub Actions CI/CD</span>
+          <span class="node">OpenTelemetry → Grafana</span>
+          <span class="node">Sentry</span>
+          <span class="node">Nightly PITR backups</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     06 · FRONTEND
+     ============================================================ -->
+<section id="frontend">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="sec-no">06</div>
+      <div class="t">
+        <div class="eyebrow">Build detail</div>
+        <h2>The front end</h2>
+      </div>
+    </div>
+
+    <div class="split">
+      <div class="rv">
+        <p class="lead">
+          One codebase serves three very different surfaces: a touch kiosk on the floor, a
+          dense back-office application, and a read-only portal for buyers.
+        </p>
+        <p style="margin-top:18px">
+          The station screen is dark by default — it sits under industrial lighting and is
+          looked at for eight hours straight. Hit targets are sized for gloved hands, the
+          whole capture flow is reachable from the keyboard or a foot pedal, and the
+          interface stays responsive while six full-resolution images upload in the
+          background.
+        </p>
+        <p>
+          The back office is the opposite problem: a hundred thousand records, sixteen
+          columns, and a supervisor who needs to find one serial number. That is a
+          virtualised table, server-side filtering and saved views — not an infinite scroll.
+        </p>
+
+        <div class="notecard">
+          <div class="k">Design system first</div>
+          <p>
+            Week one produces a token set — colour, type scale, 8px spacing, radius, motion
+            timing — and the component library built on it. Every screen after that is
+            assembled from those parts, which is what keeps eight weeks of build looking
+            like one product rather than four.
+          </p>
+        </div>
+      </div>
+
+      <div class="rv" style="--d:80ms">
+        <table class="spec">
+          <thead><tr><th>Concern</th><th>Choice</th><th>Why</th></tr></thead>
+          <tbody>
+            <tr><td>Framework</td><td>Next.js 16 · React 19</td><td>Server components keep record pages fast; one app covers kiosk, back office and portal.</td></tr>
+            <tr><td>Language</td><td>TypeScript (strict)</td><td>Types shared end to end with the API contract — no drift between client and server.</td></tr>
+            <tr><td>Styling</td><td>Tailwind v4 + design tokens</td><td>Single source of truth for the visual system; dark-first for the floor.</td></tr>
+            <tr><td>Client state</td><td>Zustand</td><td>Small, predictable stores for UI and station state. No boilerplate.</td></tr>
+            <tr><td>Server state</td><td>TanStack Query</td><td>Caching, background refetch and optimistic updates for review actions.</td></tr>
+            <tr><td>Tables</td><td>TanStack Table (virtualised)</td><td>100k+ rows at 60fps with column control and server-side sort/filter.</td></tr>
+            <tr><td>Forms</td><td>React Hook Form + Zod</td><td>The same Zod schema validates in the browser and on the server.</td></tr>
+            <tr><td>Charts</td><td>Recharts</td><td>Composable, themeable, accessible — matches the token system.</td></tr>
+            <tr><td>Motion</td><td>Framer Motion</td><td>Used sparingly: state transitions in the capture flow, nothing decorative on the floor.</td></tr>
+            <tr><td>Realtime</td><td>WebSocket + SSE fallback</td><td>Live station status and analysis progress without polling.</td></tr>
+            <tr><td>Offline</td><td>Service worker + IndexedDB</td><td>Captures queue locally and replay on reconnect; the line never stops.</td></tr>
+            <tr><td>Testing</td><td>Vitest · Testing Library · Playwright</td><td>Unit and component coverage plus end-to-end runs of the full capture journey.</td></tr>
+            <tr><td>Accessibility</td><td>WCAG 2.2 AA</td><td>Keyboard-first station flow, 44px targets, verified contrast in both themes.</td></tr>
+            <tr><td>Performance</td><td>LCP &lt; 2.0s · INP &lt; 200ms</td><td>Budgeted and measured on the actual facility hardware, not a developer laptop.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     07 · BACKEND
+     ============================================================ -->
+<section id="backend" class="tint">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="sec-no">07</div>
+      <div class="t">
+        <div class="eyebrow">Build detail</div>
+        <h2>The back end</h2>
+      </div>
+    </div>
+
+    <div class="split flip">
+      <div class="rv">
+        <table class="spec">
+          <thead><tr><th>Concern</th><th>Choice</th><th>Why</th></tr></thead>
+          <tbody>
+            <tr><td>API</td><td>NestJS · TypeScript</td><td>Modular and typed, same language as the front end, OpenAPI generated from the code.</td></tr>
+            <tr><td>Database</td><td>PostgreSQL 16 + Prisma</td><td>Relational data with real constraints; row-level security gives hard tenant isolation.</td></tr>
+            <tr><td>Search</td><td>Postgres GIN + trigram</td><td>Fast serial and free-text search without running a second datastore on day one.</td></tr>
+            <tr><td>Object storage</td><td>S3-compatible (MinIO on prem)</td><td>Presigned uploads go straight from the station — images never transit the API.</td></tr>
+            <tr><td>Queue</td><td>Redis + BullMQ</td><td>Inference, PDF rendering, exports and webhooks all run as retryable jobs.</td></tr>
+            <tr><td>Inference service</td><td>Python FastAPI + ONNX Runtime</td><td>The ML ecosystem is Python; keeping it a separate service lets it scale on GPU alone.</td></tr>
+            <tr><td>Model serving</td><td>TensorRT on the edge GPU</td><td>Sub-second inference per image, on site, with no cloud round trip.</td></tr>
+            <tr><td>Auth</td><td>OIDC / SAML + rotating JWT</td><td>Enterprise SSO for staff, device-bound service tokens for stations.</td></tr>
+            <tr><td>Events</td><td>Transactional outbox → webhooks</td><td>Signed, retried, ordered delivery to the ERP — no lost events on a network blip.</td></tr>
+            <tr><td>Reports</td><td>Headless Chromium worker</td><td>Pixel-accurate branded PDFs from the same components the web app uses.</td></tr>
+            <tr><td>Observability</td><td>OpenTelemetry · Grafana · Sentry</td><td>Traces from station tap to model output; every slow inspection is explainable.</td></tr>
+            <tr><td>Infrastructure</td><td>Docker · Terraform · GitHub Actions</td><td>Reproducible environments, blue-green deploys, one-command facility rollout.</td></tr>
+            <tr><td>Backups</td><td>Nightly PITR · 30-day window</td><td>Images tier to cold storage after 90 days to keep running cost flat.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="rv" style="--d:80ms">
+        <p class="lead">
+          The core API is deliberately boring. All of the interesting engineering sits in the
+          inference service and the grading engine — everything else should be predictable.
+        </p>
+        <p style="margin-top:18px">
+          Images are the heavy part of this system: six full-resolution photographs per
+          device, thousands of devices a day. They are uploaded straight to object storage
+          with presigned URLs, so the API never becomes the bottleneck, and processing runs
+          as queued jobs that can be retried, re-run against a newer model, or replayed after
+          an outage.
+        </p>
+        <p>
+          Grading is a rule engine, not hard-coded logic. Defect weights, thresholds and
+          per-client profiles live in the database and are versioned, which means a buyer can
+          change their standard without a release — and any historic record can be
+          re-evaluated against the profile that was live at the time.
+        </p>
+
+        <div class="notecard">
+          <div class="k">Deployment shape</div>
+          <p>
+            Control plane in the cloud, one edge node per facility. The edge node owns the
+            cameras, the GPU and a local cache; it syncs records upward and pulls model
+            updates downward. Adding a second site is a Terraform apply, not a project.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     08 · AI PIPELINE
+     ============================================================ -->
+<section id="ai" class="dark">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="sec-no" style="color:var(--dark-faint)">08</div>
+      <div class="t">
+        <div class="eyebrow">The model</div>
+        <h2>How the detection engine is built and kept honest</h2>
+        <p class="lead">
+          We start from a pretrained segmentation backbone and fine-tune it on your own
+          intake photography. The operator corrections captured in module 05 are the
+          training signal — the system gets better because it is used, not because we
+          rebuild it.
+        </p>
+      </div>
+    </div>
+
+    <div class="pipe rv">
+      <div class="pstep"><div class="n">01</div><h4>Capture</h4><p>Six calibrated angles, fixed lighting, validated focus and exposure.</p></div>
+      <div class="pstep"><div class="n">02</div><h4>Pre-process</h4><p>Device isolation, perspective correction, normalisation, tiling for small defects.</p></div>
+      <div class="pstep"><div class="n">03</div><h4>Inference</h4><p>RT-DETR / YOLO-seg fine-tune, exported to ONNX, served on TensorRT.</p></div>
+      <div class="pstep"><div class="n">04</div><h4>Post-process</h4><p>NMS, duplicate merging across angles, severity mapping, confidence gating.</p></div>
+      <div class="pstep"><div class="n">05</div><h4>Human review</h4><p>Operator accepts, corrects, resizes or draws. Ground truth is created for free.</p></div>
+      <div class="pstep loop"><div class="n">06</div><h4>Retrain loop</h4><p>Corrections queue into the training set; a candidate model must beat the incumbent on a frozen holdout before promotion.</p></div>
+    </div>
+
+    <div class="twocol" style="margin-top:56px">
+      <div class="listblock rv">
+        <span class="k" style="color:var(--c); border-color:var(--dark-line)">What we need from you</span>
+        <ul>
+          <li>1,500–3,000 representative intake photographs across your actual device mix</li>
+          <li>A defect taxonomy sign-off session in week one — your names, your severities</li>
+          <li>Two operators available for one labelling day per sprint</li>
+          <li>Final camera rig and lighting spec by week three so training data matches production</li>
+        </ul>
+      </div>
+      <div class="listblock rv" style="--d:80ms">
+        <span class="k" style="color:var(--c); border-color:var(--dark-line)">How accuracy is proven</span>
+        <ul>
+          <li>A frozen holdout set is labelled once and never trained on</li>
+          <li>Acceptance gate: recall ≥ 0.90 and precision ≥ 0.85 on the top ten defect classes</li>
+          <li>Per-class scorecard published every sprint — no single blended number</li>
+          <li>Anything below threshold routes to human review rather than being auto-graded</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     09 · DATA MODEL
+     ============================================================ -->
+<section id="data">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="sec-no">09</div>
+      <div class="t">
+        <div class="eyebrow">Foundations</div>
+        <h2>Core data model</h2>
+        <p class="lead">Agreed and migrated in sprint one. Everything else is built on top of these.</p>
+      </div>
+    </div>
+
+    <div class="ents">
+      <div class="ent rv"><div class="n">Tenant</div><div class="d">Client account; the isolation boundary for every query.</div></div>
+      <div class="ent rv" style="--d:30ms"><div class="n">User · Role</div><div class="d">Staff and buyer identities with the permission matrix.</div></div>
+      <div class="ent rv" style="--d:60ms"><div class="n">Station · Camera</div><div class="d">Physical rig, its six cameras and calibration profile.</div></div>
+      <div class="ent rv"><div class="n">Inspection</div><div class="d">The central record: device, operator, timings, status, grades.</div></div>
+      <div class="ent rv" style="--d:30ms"><div class="n">ImageAsset</div><div class="d">One capture: angle, storage key, checksum, quality flags.</div></div>
+      <div class="ent rv" style="--d:60ms"><div class="n">Detection</div><div class="d">One defect: class, region, confidence, severity, review state.</div></div>
+      <div class="ent rv"><div class="n">DefectType</div><div class="d">The taxonomy — editable, versioned, per tenant.</div></div>
+      <div class="ent rv" style="--d:30ms"><div class="n">GradeProfile</div><div class="d">Buyer-specific weights and thresholds used to grade.</div></div>
+      <div class="ent rv" style="--d:60ms"><div class="n">GradeResult</div><div class="d">Cosmetic, functional, health score, disposition, profile version.</div></div>
+      <div class="ent rv"><div class="n">AuditEvent</div><div class="d">Append-only: actor, action, before, after, timestamp.</div></div>
+      <div class="ent rv" style="--d:30ms"><div class="n">ModelVersion</div><div class="d">Which model produced which result, with its scorecard.</div></div>
+      <div class="ent rv" style="--d:60ms"><div class="n">Report · ShareLink</div><div class="d">Generated certificates and their expiring public links.</div></div>
+    </div>
+
+    <div class="sec-head rv" style="margin-top:96px; margin-bottom:32px">
+      <div class="sec-no">&nbsp;</div>
+      <div class="t"><div class="eyebrow">Non-negotiables</div><h2 style="font-size:28px">Security &amp; compliance</h2></div>
+    </div>
+
+    <div class="checks">
+      <div class="check rv"><span class="ic"></span><span class="tx"><b>Tenant isolation at the row</b><span>Postgres RLS, not application-layer filtering — a bug in a query cannot leak another client's data.</span></span></div>
+      <div class="check rv"><span class="ic"></span><span class="tx"><b>Encryption in transit and at rest</b><span>TLS 1.3 everywhere; AES-256 on volumes and object storage with documented key rotation.</span></span></div>
+      <div class="check rv"><span class="ic"></span><span class="tx"><b>Immutable audit trail</b><span>Append-only table, exportable, covering every grade, override and defect edit.</span></span></div>
+      <div class="check rv"><span class="ic"></span><span class="tx"><b>Least privilege by default</b><span>Permission matrix enforced server-side and covered by automated tests per role.</span></span></div>
+      <div class="check rv"><span class="ic"></span><span class="tx"><b>Retention &amp; erasure</b><span>Per-client retention windows, scheduled purge, and a right-to-erasure workflow.</span></span></div>
+      <div class="check rv"><span class="ic"></span><span class="tx"><b>Dependency &amp; secret scanning</b><span>SCA, SAST and secret detection run on every pull request; builds fail on new highs.</span></span></div>
+      <div class="check rv"><span class="ic"></span><span class="tx"><b>Third-party penetration test</b><span>Booked for week eleven, with remediation time inside the plan rather than after it.</span></span></div>
+      <div class="check rv"><span class="ic"></span><span class="tx"><b>SOC 2-aligned controls</b><span>Access reviews, change management and evidence export ready for an auditor.</span></span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     10 · TIMELINE
+     ============================================================ -->
+<section id="timeline" class="dark">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="sec-no" style="color:var(--dark-faint)">10</div>
+      <div class="t">
+        <div class="eyebrow">Delivery</div>
+        <h2>Twelve weeks · eight to build, four to test</h2>
+        <p class="lead">
+          Four two-week sprints to feature complete, then a dedicated four-week hardening
+          and acceptance phase. Testing is not a phase we hope to reach — it is scheduled,
+          resourced and gated.
+        </p>
+      </div>
+    </div>
+
+    <div class="gantt rv">
+      <div class="gscale">
+        <div class="lb">Workstream</div>
+        <div class="w">W1</div><div class="w">W2</div><div class="w">W3</div><div class="w">W4</div>
+        <div class="w">W5</div><div class="w">W6</div><div class="w">W7</div><div class="w">W8</div>
+        <div class="w split-l">W9</div><div class="w">W10</div><div class="w">W11</div><div class="w">W12</div>
+      </div>
+
+      <div class="grow">
+        <div class="name"><b>Discovery &amp; design</b><span>Sprint 0–1</span></div>
+        <div class="bar" style="--from:2; --to:5; --d:0ms">Tokens · IA · schema</div>
+      </div>
+      <div class="grow">
+        <div class="name"><b>Foundations</b><span>Sprint 1</span></div>
+        <div class="bar" style="--from:2; --to:4; --d:60ms">Auth · RBAC · shell</div>
+      </div>
+      <div class="grow">
+        <div class="name"><b>Capture &amp; AI pipeline</b><span>Sprint 2</span></div>
+        <div class="bar" style="--from:4; --to:6; --d:120ms">Station · inference</div>
+      </div>
+      <div class="grow">
+        <div class="name"><b>Model training</b><span>Continuous</span></div>
+        <div class="bar" style="--from:3; --to:10; --d:180ms">Label · train · evaluate · promote</div>
+      </div>
+      <div class="grow">
+        <div class="name"><b>Review &amp; grading</b><span>Sprint 3</span></div>
+        <div class="bar" style="--from:6; --to:8; --d:240ms">Review · grading</div>
+      </div>
+      <div class="grow">
+        <div class="name"><b>Records &amp; reporting</b><span>Sprint 4</span></div>
+        <div class="bar" style="--from:8; --to:10; --d:300ms">Records · admin</div>
+      </div>
+      <div class="grow">
+        <div class="name"><b>System &amp; regression test</b><span>Test phase</span></div>
+        <div class="bar test" style="--from:10; --to:12; --d:360ms">SIT · regression</div>
+      </div>
+      <div class="grow">
+        <div class="name"><b>UAT &amp; accuracy validation</b><span>Test phase</span></div>
+        <div class="bar test" style="--from:11; --to:13; --d:420ms">UAT · accuracy</div>
+      </div>
+      <div class="grow">
+        <div class="name"><b>Performance &amp; security</b><span>Test phase</span></div>
+        <div class="bar test" style="--from:12; --to:13; --d:480ms">Hardening</div>
+      </div>
+      <div class="grow">
+        <div class="name"><b>Pilot, training &amp; handover</b><span>Go live</span></div>
+        <div class="bar ghost" style="--from:13; --to:14; --d:540ms">Pilot</div>
+      </div>
+
+      <div class="phaselegend">
+        <div class="li"><span class="sw" style="background:var(--grad)"></span> Development · W1–W8</div>
+        <div class="li"><span class="sw" style="background:linear-gradient(120deg,#18bccf,#3a33c9)"></span> Testing &amp; hardening · W9–W12</div>
+        <div class="li"><span class="sw" style="background:rgba(255,255,255,.12); border:1px dashed rgba(255,255,255,.3)"></span> Cutover</div>
+      </div>
+    </div>
+
+    <div class="miles">
+      <div class="mile rv"><div class="k">M1 · End W2</div><b>Environments, auth and app shell running</b><span>Demo</span></div>
+      <div class="mile rv" style="--d:50ms"><div class="k">M2 · End W4</div><b>First device graded end to end by the model</b><span>Demo</span></div>
+      <div class="mile rv" style="--d:100ms"><div class="k">M3 · End W6</div><b>Full review, correction and grading flow</b><span>Demo</span></div>
+      <div class="mile rv" style="--d:150ms"><div class="k">M4 · End W8</div><b>Feature complete · code freeze</b><span>Gate</span></div>
+      <div class="mile rv" style="--d:200ms"><div class="k">M5 · End W10</div><b>UAT and model accuracy signed off</b><span>Gate</span></div>
+      <div class="mile rv" style="--d:250ms"><div class="k">M6 · End W12</div><b>Production go-live and handover</b><span>Gate</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     11 · SPRINTS
+     ============================================================ -->
+<section id="sprints">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="sec-no">11</div>
+      <div class="t">
+        <div class="eyebrow">Week by week</div>
+        <h2>What lands, and when</h2>
+        <p class="lead">Each sprint ends in a working demo on the staging environment and an
+        exit criterion that is either met or not. There is no "90% done".</p>
+      </div>
+    </div>
+
+    <div class="sprints">
+      <article class="sprint rv">
+        <div class="top"><span class="wk">Sprint 1 · Weeks 1–2</span><span class="mono xs" style="color:var(--faint)">BUILD</span></div>
+        <h3>Foundations</h3>
+        <ul>
+          <li>Discovery workshop, defect taxonomy sign-off, grading rules captured</li>
+          <li>Design tokens and component library; station and back-office layouts</li>
+          <li>Repository, CI/CD, staging and production environments, Terraform baseline</li>
+          <li>Database schema and migrations; tenant isolation with row-level security</li>
+          <li>Authentication, SSO wiring, role matrix and the permission test suite</li>
+          <li>Application shell, navigation, station registry</li>
+        </ul>
+        <div class="exit"><b>Exit criteria</b>A user can sign in with SSO, land in the correct tenant, and see an empty but fully navigable application on staging. Labelling of the training set has begun.</div>
+      </article>
+
+      <article class="sprint rv" style="--d:60ms">
+        <div class="top"><span class="wk">Sprint 2 · Weeks 3–4</span><span class="mono xs" style="color:var(--faint)">BUILD</span></div>
+        <h3>Capture &amp; the AI pipeline</h3>
+        <ul>
+          <li>Station workflow: scan, verify, position, capture, analyse</li>
+          <li>Camera controller integration, presigned uploads, quality validation and retake</li>
+          <li>Inference service, job queue, and the first fine-tuned model in the loop</li>
+          <li>Detection storage, confidence and severity mapping, model version stamping</li>
+          <li>Offline capture queue and reconnect sync</li>
+          <li>Live station status over WebSocket</li>
+        </ul>
+        <div class="exit"><b>Exit criteria</b>A real device is scanned, photographed from six angles and returned with model detections attached — the full happy path, on staging hardware.</div>
+      </article>
+
+      <article class="sprint rv" style="--d:120ms">
+        <div class="top"><span class="wk">Sprint 3 · Weeks 5–6</span><span class="mono xs" style="color:var(--faint)">BUILD</span></div>
+        <h3>Review, grading &amp; records</h3>
+        <ul>
+          <li>Annotated viewer: boxes, heat map, zoom-to-defect, cursor resize and draw tools</li>
+          <li>Accept, reject, reclassify, merge, severity change — all audited</li>
+          <li>Grading engine, health score, per-client grade profiles, disposition rules</li>
+          <li>Override with reason codes and supervisor routing</li>
+          <li>Inspection history grid with search, filters, saved views and bulk actions</li>
+          <li>Automated regression suite starts running on every build</li>
+        </ul>
+        <div class="exit"><b>Exit criteria</b>An operator can correct the model's output and produce a defensible grade, with a complete audit trail behind every change.</div>
+      </article>
+
+      <article class="sprint rv" style="--d:180ms">
+        <div class="top"><span class="wk">Sprint 4 · Weeks 7–8</span><span class="mono xs" style="color:var(--faint)">BUILD</span></div>
+        <h3>Reporting, admin &amp; integrations</h3>
+        <ul>
+          <li>Inspection record tabs, image management, PDF certificate and share links</li>
+          <li>CSV import wizard; CSV, XLSX, PDF and JSON exports</li>
+          <li>Analytics dashboards and the scheduled digest</li>
+          <li>Administration: clients, users, stations, taxonomy, grade profiles, branding</li>
+          <li>Webhooks, ERP connector and scheduled buyer feeds</li>
+          <li>Accessibility pass and performance budget enforcement</li>
+        </ul>
+        <div class="exit"><b>Exit criteria</b>All sixty features are implemented and demoed. <strong>Code freeze.</strong> Only defect fixes are merged from here.</div>
+      </article>
+
+      <article class="sprint testp rv" style="--d:240ms">
+        <div class="top"><span class="wk">Week 9</span><span class="mono xs" style="color:var(--c)">TEST</span></div>
+        <h3>System integration &amp; regression</h3>
+        <ul>
+          <li>Full SIT across station, API, inference and integrations</li>
+          <li>Automated regression suite executed against a frozen build</li>
+          <li>Data migration rehearsal and rollback drill</li>
+          <li>Defect triage twice daily; severity 1 and 2 fixed same day</li>
+        </ul>
+        <div class="exit"><b>Exit criteria</b>Zero open severity-1 or severity-2 defects; regression suite green three consecutive runs.</div>
+      </article>
+
+      <article class="sprint testp rv" style="--d:300ms">
+        <div class="top"><span class="wk">Week 10</span><span class="mono xs" style="color:var(--c)">TEST</span></div>
+        <h3>UAT &amp; model accuracy validation</h3>
+        <ul>
+          <li>Structured UAT scripts run by your own operators and supervisors on real stock</li>
+          <li>Model scored against the frozen holdout set; per-class scorecard published</li>
+          <li>Grade agreement study — platform grade versus expert human grade</li>
+          <li>Feedback log with a fix-or-defer decision recorded against every item</li>
+        </ul>
+        <div class="exit"><b>Exit criteria</b>UAT signed off by the sponsor; recall ≥ 0.90 and precision ≥ 0.85 on the top ten classes.</div>
+      </article>
+
+      <article class="sprint testp rv" style="--d:360ms">
+        <div class="top"><span class="wk">Week 11</span><span class="mono xs" style="color:var(--c)">TEST</span></div>
+        <h3>Performance, security &amp; accessibility</h3>
+        <ul>
+          <li>Load test at 3× expected peak throughput; soak test over 24 hours</li>
+          <li>Third-party penetration test and remediation</li>
+          <li>Failure drills: network loss, GPU offline, storage unavailable</li>
+          <li>WCAG 2.2 AA audit of operator and supervisor journeys</li>
+        </ul>
+        <div class="exit"><b>Exit criteria</b>p95 API under 300ms at peak; no critical or high security findings open; accessibility audit passed.</div>
+      </article>
+
+      <article class="sprint testp rv" style="--d:420ms">
+        <div class="top"><span class="wk">Week 12</span><span class="mono xs" style="color:var(--c)">GO LIVE</span></div>
+        <h3>Pilot, training &amp; handover</h3>
+        <ul>
+          <li>Pilot run on one live line, monitored, with the old process running alongside</li>
+          <li>Final defect burn-down and release candidate sign-off</li>
+          <li>Operator, supervisor and admin training plus recorded walkthroughs</li>
+          <li>Runbooks, architecture docs, API reference and model retraining guide</li>
+          <li>Production cutover and thirty days of hypercare</li>
+        </ul>
+        <div class="exit"><b>Exit criteria</b>Pilot line running on the platform for five consecutive days without a severity-1 incident. Handover accepted.</div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     12 · RISKS
+     ============================================================ -->
+<section id="risks">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="sec-no">12</div>
+      <div class="t">
+        <div class="eyebrow">Honest assessment</div>
+        <h2>Risks and how we hold them</h2>
+      </div>
+    </div>
+
+    <table class="risk rv">
+      <thead><tr><th>Risk</th><th>Level</th><th>Mitigation</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Not enough labelled training data</td>
+          <td><span class="lvl h">High</span></td>
+          <td>Start from a pretrained backbone; run a labelling sprint from week one; use active learning so operator corrections in weeks 5–10 close the gap. Anything under the confidence threshold routes to a human rather than guessing.</td>
+        </tr>
+        <tr>
+          <td>Camera rig or GPU hardware arrives late</td>
+          <td><span class="lvl h">High</span></td>
+          <td>A mock camera driver and a recorded image set are built in sprint 2, so software delivery is never blocked by hardware. Hardware spec is frozen at week three.</td>
+        </tr>
+        <tr>
+          <td>Lighting or positioning varies between sites</td>
+          <td><span class="lvl m">Medium</span></td>
+          <td>Fixed rig geometry, a per-station calibration profile, and automatic exposure and focus validation that refuses a bad frame before it reaches the model.</td>
+        </tr>
+        <tr>
+          <td>ERP integration access is slow to arrange</td>
+          <td><span class="lvl m">Medium</span></td>
+          <td>Contract-first: the connector is built against an agreed schema with a stub, and swapped to the live endpoint when credentials arrive. Not on the critical path.</td>
+        </tr>
+        <tr>
+          <td>Grading rules change during the build</td>
+          <td><span class="lvl m">Medium</span></td>
+          <td>Grading is configuration, not code. Rules live in versioned profiles that can be edited without a release and replayed against historic records.</td>
+        </tr>
+        <tr>
+          <td>Scope grows inside a fixed twelve weeks</td>
+          <td><span class="lvl m">Medium</span></td>
+          <td>The sixty features above are the contract. New requests are logged, estimated and scheduled after go-live, or swapped in against something of equal size.</td>
+        </tr>
+        <tr>
+          <td>Operator adoption on the floor</td>
+          <td><span class="lvl l">Low</span></td>
+          <td>Two of your operators are involved from week one, sit in every demo, and run UAT themselves. The people who will use it help shape it.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="twocol" style="margin-top:72px">
+      <div class="listblock rv">
+        <span class="k">Assumptions</span>
+        <ul>
+          <li>You provide sample devices covering your real intake mix, plus 1,500–3,000 photographs for training</li>
+          <li>Camera rig, lighting and GPU hardware are procured by you and on site by week three</li>
+          <li>Two operators and one supervisor are available for one day per sprint</li>
+          <li>One integration endpoint (ERP or WMS) is in scope; further systems are change requests</li>
+          <li>Sponsor attends a weekly one-hour review and turns decisions around within two working days</li>
+          <li>Cloud hosting and third-party licences are billed to you at cost</li>
+        </ul>
+      </div>
+      <div class="listblock rv" style="--d:80ms">
+        <span class="k">Out of scope for v1</span>
+        <ul>
+          <li>Native mobile applications — the web app is responsive and installable</li>
+          <li>Automated repair-cost estimation and parts pricing</li>
+          <li>Marketplace listing sync (eBay, Back Market and similar)</li>
+          <li>Languages other than English in the interface</li>
+          <li>Robotic device handling and conveyor control</li>
+          <li>Functional testing of the device itself — battery cycles, port continuity, screen response</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     13 · CLOSE
+     ============================================================ -->
+<section id="next" class="close dark">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="sec-no" style="color:var(--dark-faint)">13</div>
+      <div class="t">
+        <div class="eyebrow">Next steps</div>
+        <h2>Getting to week one</h2>
+        <p class="lead">Four things stand between this document and a kick-off. None of them
+        take more than a week.</p>
+      </div>
+    </div>
+
+    <div class="next">
+      <div class="nx rv"><div class="n">01</div><b>Scope sign-off</b><p>Confirm the sixty features, the assumptions and what is out of scope for v1.</p></div>
+      <div class="nx rv" style="--d:60ms"><div class="n">02</div><b>Commercials &amp; contract</b><p>Statement of work, payment schedule tied to the six milestones, and signature.</p></div>
+      <div class="nx rv" style="--d:120ms"><div class="n">03</div><b>Access &amp; hardware</b><p>Environments, SSO tenant, ERP contact, and a purchase order for the camera rig.</p></div>
+      <div class="nx rv" style="--d:180ms"><div class="n">04</div><b>Discovery workshop</b><p>One day on site: taxonomy, grading rules, and photographs of your real stock.</p></div>
+    </div>
+
+    <div class="signoff">
+      <div class="sig rv">
+        <div class="k">Accepted for the client</div>
+        <div class="line"></div>
+        <div class="who">Hugo Martinez</div>
+        <div class="sub">Project sponsor · Date</div>
+      </div>
+      <div class="sig rv" style="--d:60ms">
+        <div class="k">Proposed by</div>
+        <div class="line"></div>
+        <div class="who">Pixorama Group</div>
+        <div class="sub">Product engineering · Date</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="hair" style="margin-bottom:28px"></div>
+    <div class="fbar">
+      <span class="lock">
+        <svg class="mark" viewBox="0 0 179 100" role="img" aria-label="Pixorama">
+          <defs>
+            <linearGradient id="pxo-f" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#4f2fdb" />
+              <stop offset=".55" stop-color="#7c3aed" />
+              <stop offset="1" stop-color="#c13ccf" />
+            </linearGradient>
+          </defs>
+          <rect x="0" y="0" width="100" height="100" rx="27" fill="url(#pxo-f)" />
+          <text x="50" y="50" fill="#fff" font-family="Manrope,sans-serif" font-size="44"
+                font-weight="800" letter-spacing="-1" text-anchor="middle"
+                dominant-baseline="central">PX</text>
+          <circle cx="142" cy="50" r="30" fill="none" stroke="#6d55e8" stroke-width="13" />
+        </svg>
+        <span class="word">Pixorama<em>.</em></span>
+      </span>
+      <span>Confidential · Prepared for Hugo Martinez</span>
+      <span>v1.0 · 2026</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var canObserve = 'IntersectionObserver' in window;
+
+  /* Only hide content for the reveal once we know we can bring it back. */
+  if(canObserve && !reduce) document.documentElement.classList.add('js-motion');
+
+  /* ---- scroll progress ---- */
+  var bar = document.getElementById('pbar'), ticking = false;
+  function progress(){
+    var h = document.documentElement;
+    var p = h.scrollTop / Math.max(1, h.scrollHeight - h.clientHeight);
+    bar.style.transform = 'scaleX(' + p + ')';
+    ticking = false;
+  }
+  addEventListener('scroll', function(){
+    if(!ticking){ ticking = true; requestAnimationFrame(progress); }
+  }, {passive:true});
+  progress();
+
+  /* ---- count-up ---- */
+  function countUp(el){
+    var target = parseFloat(el.dataset.count);
+    var suffix = el.dataset.suffix || '';
+    if(reduce){ el.textContent = target + suffix; return; }
+    var t0 = null, dur = 900;
+    function frame(t){
+      if(!t0) t0 = t;
+      var k = Math.min(1, (t - t0) / dur);
+      var eased = 1 - Math.pow(1 - k, 3);
+      el.textContent = Math.round(target * eased) + suffix;
+      if(k < 1) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  /* ---- reveal on scroll ---- */
+  var targets = document.querySelectorAll('.rv, .grow .bar');
+
+  function show(el){
+    if(el.classList.contains('in')) return;
+    el.classList.add('in');
+    el.querySelectorAll('[data-count]').forEach(countUp);
+    if(el.matches('[data-count]')) countUp(el);
+  }
+
+  if(!canObserve || reduce){
+    targets.forEach(show);
+    return;
+  }
+
+  /* Reveal anything on screen or above it. Idempotent and cheap, so it can be
+     called from anywhere — this, not the observer, is what guarantees the
+     document is readable. Deep links (…/#features), restored scroll positions
+     and renderers with a broken IntersectionObserver all land here. */
+  var pending = false;
+  function sweep(){
+    pending = false;
+    var limit = innerHeight * 1.15;
+    for(var i = 0; i < targets.length; i++){
+      if(targets[i].getBoundingClientRect().top < limit) show(targets[i]);
+    }
+  }
+  function queueSweep(){
+    if(pending) return;
+    pending = true;
+    requestAnimationFrame(sweep);
+  }
+
+  /* Fast path: reveal exactly at the threshold while scrolling normally. */
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(!e.isIntersecting) return;
+      show(e.target);
+      io.unobserve(e.target);
+    });
+  }, {rootMargin:'0px 0px -6% 0px', threshold:0});
+  targets.forEach(function(el){ io.observe(el); });
+
+  addEventListener('scroll', queueSweep, {passive:true});
+  addEventListener('resize', queueSweep, {passive:true});
+  addEventListener('load', queueSweep);
+  addEventListener('hashchange', function(){ setTimeout(sweep, 450); });
+
+  /* Anchor jumps and late layout settle at unpredictable moments; a handful of
+     early sweeps costs nothing and removes every "blank until you scroll" case. */
+  sweep();
+  [120, 600, 1600, 3200].forEach(function(ms){ setTimeout(sweep, ms); });
+})();
+</script>
+</body>
+</html>
