@@ -1,0 +1,6 @@
+node_modules/
+_*.py
+_*.pdf
+_render.py
+package-lock.json
+~$*
