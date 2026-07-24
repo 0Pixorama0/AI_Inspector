@@ -1,0 +1,1715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Device Inspector · Statement of Work · Pixorama → Hugo Martinez</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+/* ============================================================
+   AI DEVICE INSPECTOR — PLATFORM PROPOSAL
+   Pixorama Group · house system (Manrope + JetBrains Mono)
+   ============================================================ */
+
+:root{
+  /* brand — from the PXO logo */
+  --i:#3a33c9;      /* deep blue    */
+  --c:#18bccf;      /* cyan         */
+  --v:#7c3aed;      /* violet       */
+  --p:#b23fc9;      /* magenta      */
+  --grad:linear-gradient(120deg,var(--i) 0%,var(--v) 52%,var(--p) 100%);
+  --grad-cool:linear-gradient(120deg,var(--c),var(--v));
+
+  /* ink & surface */
+  --ink:#0d0e1a;
+  --ink2:#33354a;
+  --muted:#5f6178;
+  --faint:#686b82;
+  --line:#e7e9f2;
+  --line2:#f0f2f8;
+  --paper:#ffffff;
+  --paper2:#f6f7fb;
+  --dark:#05050f;
+  --dark2:#0b0b1c;
+  --dark-line:rgba(255,255,255,.10);
+  --dark-ink:#eef0fb;
+  --dark-ink2:#b4b7d4;
+  --dark-faint:#9698c6;
+
+  /* semantic */
+  --ok:#10b981;
+  --warn:#f59e0b;
+  --crit:#ef4444;
+
+  /* 8px scale */
+  --s1:8px; --s2:16px; --s3:24px; --s4:32px; --s5:48px; --s6:64px; --s7:96px; --s8:128px;
+
+  --r-sm:8px; --r-md:14px; --r-lg:22px;
+  --ease:cubic-bezier(.22,.61,.36,1);
+  --t-fast:200ms; --t-mid:340ms; --t-slow:640ms;
+
+  --maxw:1160px;
+}
+
+*,*::before,*::after{ box-sizing:border-box; margin:0; padding:0; }
+html{ scroll-behavior:smooth; -webkit-text-size-adjust:100%; }
+body{
+  font-family:'Manrope',-apple-system,'Segoe UI',system-ui,sans-serif;
+  background:var(--paper);
+  color:var(--ink);
+  font-size:16px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  overflow-x:hidden;
+}
+img{ max-width:100%; display:block; }
+::selection{ background:rgba(124,58,237,.22); }
+
+/* ---------- type ---------- */
+/* Note: JetBrains Mono's slashed-zero alternate ("zero" 1) is deliberately NOT
+   enabled — at label sizes the slash closes up and "W10" reads as "W18". */
+.mono{ font-family:'JetBrains Mono','SFMono-Regular',Consolas,monospace; }
+.eyebrow{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px; letter-spacing:.28em; text-transform:uppercase;
+  color:var(--i); font-weight:500;
+}
+.dark .eyebrow, .eyebrow.on-dark{ color:var(--c); }
+h1{ font-size:clamp(38px,5.6vw,68px); font-weight:800; letter-spacing:-.035em; line-height:1.02; }
+h2{ font-size:clamp(28px,3.4vw,44px); font-weight:800; letter-spacing:-.03em; line-height:1.08; }
+h3{ font-size:20px; font-weight:700; letter-spacing:-.015em; line-height:1.25; }
+h4{ font-size:15px; font-weight:700; letter-spacing:-.005em; }
+p{ color:var(--ink2); }
+.lead{ font-size:clamp(17px,1.5vw,21px); line-height:1.62; color:var(--ink2); font-weight:400; }
+.dark .lead{ color:var(--dark-ink2); }
+.sm{ font-size:14px; line-height:1.6; }
+.xs{ font-size:12.5px; line-height:1.55; }
+strong{ font-weight:700; color:var(--ink); }
+.dark strong{ color:#fff; }
+.accent{ color:var(--v); }
+.dark .accent{ color:#a78bfa; }
+
+/* ---------- layout ---------- */
+.wrap{ width:100%; max-width:var(--maxw); margin:0 auto; padding:0 var(--s4); }
+section{ position:relative; padding:var(--s8) 0; }
+section.tight{ padding:var(--s7) 0; }
+.dark{ background:var(--dark); color:var(--dark-ink); }
+.dark p{ color:var(--dark-ink2); }
+.dark h1,.dark h2,.dark h3,.dark h4{ color:#fff; }
+.tint{ background:var(--paper2); }
+.rule{ height:3px; width:56px; border-radius:3px; background:var(--grad); }
+.hair{ height:1px; background:var(--line); }
+.dark .hair{ background:var(--dark-line); }
+
+.sec-head{ display:flex; align-items:flex-start; gap:var(--s3); margin-bottom:var(--s6); }
+.sec-no{
+  font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:.2em;
+  color:var(--faint); padding-top:10px; flex:none; width:44px;
+}
+.dark .sec-no{ color:var(--dark-faint); }
+.sec-head .t{ flex:1; min-width:0; }
+.sec-head h2{ margin:10px 0 0; max-width:22ch; }
+.sec-head .lead{ margin-top:var(--s2); max-width:64ch; }
+
+/* ---------- reveal motion ----------
+   Content is visible by default and only hidden once the script has confirmed
+   it can reveal it again (html.js-motion). A page that never runs the script,
+   or a browser whose IntersectionObserver misbehaves, still reads normally. */
+.js-motion .rv{ opacity:0; transform:translateY(14px); }
+.js-motion .rv.in{
+  opacity:1; transform:none;
+  transition:opacity var(--t-slow) var(--ease) var(--d,0ms),
+             transform var(--t-slow) var(--ease) var(--d,0ms);
+}
+
+/* ============================================================
+   SCROLL PROGRESS
+   ============================================================ */
+.progress{
+  position:fixed; top:0; left:0; height:2px; width:100%; z-index:90;
+  background:transparent; pointer-events:none;
+}
+.progress i{
+  display:block; height:100%; width:100%; background:var(--grad);
+  transform:scaleX(0); transform-origin:0 50%;
+}
+
+/* ============================================================
+   COVER
+   ============================================================ */
+.cover{
+  min-height:100vh; display:flex; align-items:center;
+  padding:var(--s7) 0 var(--s6);
+  background:
+    radial-gradient(52% 42% at 84% 8%, rgba(124,58,237,.20), transparent 70%),
+    radial-gradient(46% 40% at 4% 96%, rgba(24,188,207,.13), transparent 70%),
+    radial-gradient(38% 34% at 96% 78%, rgba(178,63,201,.14), transparent 70%),
+    var(--dark);
+  overflow:hidden;
+}
+.cover::after{
+  content:''; position:absolute; inset:0; pointer-events:none; opacity:.5;
+  background-image:
+    linear-gradient(rgba(255,255,255,.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.028) 1px, transparent 1px);
+  background-size:72px 72px;
+  mask-image:radial-gradient(70% 60% at 50% 40%, #000, transparent 78%);
+}
+.cover .wrap{ position:relative; z-index:2; }
+.cover-grid{ display:grid; grid-template-columns:1.02fr .98fr; gap:var(--s6); align-items:center; }
+/* Grid children default to a min-content floor; nowrap labels inside would
+   otherwise widen the column past the viewport on small screens. */
+.cover-grid > *,.plain-grid > *,.split > *,.journey-wrap > *,.layer > *{ min-width:0; }
+
+/* PXO monogram — gradient square with the "PX", violet ring as the "O". */
+.lock{ display:flex; align-items:center; gap:14px; }
+.lock .mark{ height:38px; width:auto; flex:none; display:block;
+  filter:drop-shadow(0 6px 20px rgba(124,58,237,.38)); }
+/* Uppercase wordmark tinted with a faded version of the mark's own gradient.
+   Solid colour first: if background-clip:text is unavailable the text must still
+   be visible, not transparent. Kept on one line — Apple's PDF viewers paint a
+   solid box over gradient-clipped text that wraps (see the capability statement). */
+.lock .word{
+  font-size:15px; font-weight:800; letter-spacing:.17em; text-transform:uppercase;
+  white-space:nowrap; color:#a99ee6;
+}
+@supports ((-webkit-background-clip:text) or (background-clip:text)){
+  .lock .word{
+    background:linear-gradient(100deg,#8f7ff0 0%,#a78bfa 46%,#cf93de 100%);
+    -webkit-background-clip:text; background-clip:text;
+    -webkit-text-fill-color:transparent;
+  }
+}
+.lock .word em{ font-style:normal; }
+footer .lock{ gap:11px; }
+footer .lock .mark{ height:24px; filter:none; }
+footer .lock .word{ font-size:12px; letter-spacing:.16em; }
+
+.cover h1{ margin:var(--s3) 0 0; }
+.cover h1 .l2{ display:block; color:#a78bfa; }
+.cover .lead{ margin-top:var(--s3); max-width:50ch; }
+
+.party{
+  margin-top:var(--s5); display:grid; grid-template-columns:1fr 1fr; gap:var(--s2);
+  max-width:460px;
+}
+.party .box{
+  border:1px solid var(--dark-line); border-radius:var(--r-md);
+  padding:14px 16px; background:rgba(255,255,255,.035);
+}
+.party .k{ font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.22em;
+  text-transform:uppercase; color:var(--dark-faint); }
+.party .v{ font-size:15px; font-weight:700; color:#fff; margin-top:6px; }
+.party .s{ font-size:12px; color:var(--dark-faint); margin-top:2px; }
+
+.metarail{
+  margin-top:var(--s5); display:flex; flex-wrap:wrap; gap:var(--s4);
+  padding-top:var(--s3); border-top:1px solid var(--dark-line);
+}
+.metarail .m .n{ font-family:'JetBrains Mono',monospace; font-size:26px; font-weight:700; color:#fff; letter-spacing:-.02em; }
+.metarail .m .n b{ color:#a78bfa; font-weight:700; }
+.metarail .m .l{ font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--dark-faint); margin-top:4px; }
+
+/* --- signature moment: the scan viewport --- */
+.viewport{
+  position:relative; border-radius:var(--r-lg); overflow:hidden;
+  border:1px solid rgba(255,255,255,.16);
+  box-shadow:0 40px 90px -30px rgba(0,0,0,.9), 0 0 0 1px rgba(124,58,237,.16);
+  background:#0a0a16;
+}
+.viewport .shot{ width:100%; aspect-ratio:16/10; object-fit:cover; opacity:.94; }
+.viewport .chrome{
+  position:absolute; top:0; left:0; right:0; height:38px; z-index:4;
+  display:flex; align-items:center; gap:8px; padding:0 14px;
+  background:linear-gradient(180deg,rgba(5,5,15,.94),rgba(5,5,15,0));
+  font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.16em;
+  text-transform:uppercase; color:#8a8dbb;
+}
+.viewport .chrome .dot{ width:6px; height:6px; border-radius:50%; background:var(--c);
+  box-shadow:0 0 10px var(--c); animation:blip 2.4s var(--ease) infinite; }
+@keyframes blip{ 0%,100%{ opacity:1 } 50%{ opacity:.28 } }
+.viewport .chrome .right{ margin-left:auto; color:#5f628f; white-space:nowrap; }
+.viewport .chrome > span:not(.dot):not(.right){ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+.scan{
+  position:absolute; left:0; right:0; height:150px; z-index:3; pointer-events:none;
+  background:linear-gradient(180deg, transparent, rgba(24,188,207,.16) 62%, rgba(124,58,237,.30) 88%, rgba(255,255,255,.85) 100%);
+  animation:sweep 3.4s var(--ease) 1 forwards;
+}
+@keyframes sweep{
+  0%   { transform:translateY(-160px); opacity:0 }
+  12%  { opacity:1 }
+  76%  { opacity:1 }
+  92%  { transform:translateY(560px); opacity:0 }
+  100% { transform:translateY(560px); opacity:0 }
+}
+
+.det{ position:absolute; z-index:5; border:2px solid; border-radius:3px; opacity:0; }
+.det .tag{
+  position:absolute; top:-19px; left:-2px; white-space:nowrap;
+  font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700;
+  letter-spacing:.06em; padding:2px 6px; border-radius:3px; color:#05050f;
+}
+/* Detections land once as the first sweep passes and then stay put — they are
+   the result of the inspection, not a decoration that loops. `forwards` holds
+   the final frame. */
+.det.a{ left:8%;  top:52%; width:38%; height:30%; border-color:var(--crit); background:rgba(239,68,68,.14);
+        animation:snap .55s var(--ease) 1.55s forwards; }
+.det.a .tag{ background:var(--crit); }
+.det.b{ left:52%; top:30%; width:30%; height:24%; border-color:var(--warn); background:rgba(245,158,11,.12);
+        animation:snap .55s var(--ease) 1.25s forwards; }
+.det.b .tag{ background:var(--warn); }
+.det.c{ left:58%; top:60%; width:21%; height:15%; border-color:var(--c); background:rgba(24,188,207,.12);
+        animation:snap .55s var(--ease) 1.8s forwards; }
+.det.c .tag{ background:var(--c); }
+@keyframes snap{
+  from{ opacity:0; transform:scale(1.06) }
+  to  { opacity:1; transform:scale(1) }
+}
+.viewport .verdict{
+  position:absolute; left:14px; bottom:14px; z-index:6;
+  display:flex; align-items:center; gap:10px;
+  border:1px solid rgba(255,255,255,.18); border-radius:999px;
+  background:rgba(5,5,15,.82); backdrop-filter:blur(8px);
+  padding:7px 14px 7px 10px;
+  font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.14em;
+  text-transform:uppercase; color:#cfd1ff;
+  animation:snap .55s var(--ease) 2.4s forwards;
+}
+.viewport .verdict b{ color:#fff; font-size:13px; letter-spacing:0; }
+.viewport .verdict .pill{ width:22px; height:22px; border-radius:50%; background:var(--grad);
+  display:grid; place-items:center; color:#fff; font-size:11px; font-weight:800; }
+
+.scrollcue{
+  position:absolute; left:50%; bottom:26px; transform:translateX(-50%); z-index:3;
+  font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.24em;
+  text-transform:uppercase; color:var(--dark-faint); text-align:center;
+}
+.scrollcue i{ display:block; width:1px; height:34px; margin:8px auto 0;
+  background:linear-gradient(180deg,var(--v),transparent); }
+
+/* ============================================================
+   PLAIN ENGLISH
+   ============================================================ */
+.bigstate{
+  font-size:clamp(22px,2.5vw,32px); line-height:1.42; font-weight:600;
+  letter-spacing:-.02em; color:var(--ink); max-width:26ch;
+}
+.plain-grid{ display:grid; grid-template-columns:1fr 1.15fr; gap:var(--s6); align-items:start; }
+.plain-body p + p{ margin-top:var(--s2); }
+.outputs{ margin-top:var(--s5); }
+.outputs > div{ display:flex; justify-content:space-between; align-items:baseline; gap:var(--s2);
+  padding:13px 0; border-bottom:1px solid var(--line2); }
+.outputs > div:first-child{ border-top:1px solid var(--line2); }
+.outputs dt{ font-size:14px; font-weight:700; color:var(--ink); }
+.outputs dd{ font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted);
+  text-align:right; letter-spacing:.02em; }
+
+.compare{ display:grid; grid-template-columns:1fr 1fr; gap:0; margin-top:var(--s6);
+  border:1px solid var(--line); border-radius:var(--r-lg); overflow:hidden; }
+.compare .col{ padding:var(--s4); }
+.compare .col:first-child{ border-right:1px solid var(--line); background:var(--paper2); }
+.compare .h{ display:flex; align-items:center; gap:9px; margin-bottom:var(--s3); }
+.compare .h .dot{ width:8px; height:8px; border-radius:50%; }
+.compare .h .lbl{ font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--muted); }
+.compare ul{ list-style:none; }
+.compare li{ position:relative; padding-left:22px; font-size:14.5px; line-height:1.55; color:var(--ink2); }
+.compare li + li{ margin-top:13px; }
+.compare li::before{
+  content:''; position:absolute; left:0; top:9px; width:9px; height:9px; border-radius:2px;
+  border:1.5px solid var(--faint);
+}
+.compare .col.good li::before{ border-color:var(--v); background:rgba(124,58,237,.18); }
+
+.tiles{ display:grid; grid-template-columns:repeat(4,1fr); gap:var(--s2); margin-top:var(--s5); }
+.tile{ border:1px solid var(--line); border-radius:var(--r-md); padding:var(--s3); background:var(--paper); }
+.tile .n{ font-family:'JetBrains Mono',monospace; font-size:30px; font-weight:700;
+  letter-spacing:-.03em; color:var(--i); }
+.tile .l{ font-size:13px; color:var(--ink2); margin-top:6px; line-height:1.4; }
+.tile .tagx{ font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:.18em;
+  text-transform:uppercase; color:var(--faint); margin-top:10px; display:block; }
+
+/* ============================================================
+   JOURNEY
+   ============================================================ */
+/* Steps on the left, a sticky evidence column on the right — the photographs
+   stay in view while you read the journey they describe. */
+.journey-wrap{ display:grid; grid-template-columns:1.32fr .68fr; gap:var(--s6); align-items:start; }
+.journey{ position:relative; }
+.journey::before{
+  content:''; position:absolute; left:23px; top:12px; bottom:12px; width:1px;
+  background:linear-gradient(180deg,var(--v),var(--c),transparent);
+}
+.step{ position:relative; padding-left:74px; }
+.step + .step{ margin-top:var(--s5); }
+.step .num{
+  position:absolute; left:0; top:0; width:48px; height:48px; border-radius:13px;
+  display:grid; place-items:center; background:var(--paper); border:1px solid var(--line);
+  font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:700; color:var(--i);
+  box-shadow:0 3px 14px rgba(13,14,26,.05);
+}
+.step.key .num{ background:var(--grad); color:#fff; border-color:transparent;
+  box-shadow:0 8px 26px rgba(124,58,237,.32); }
+.step h3{ margin-bottom:6px; }
+.step p{ font-size:14.5px; max-width:66ch; }
+.step .who{ font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.18em;
+  text-transform:uppercase; color:var(--faint); margin-top:9px; display:block; }
+
+.jshots{ display:grid; gap:var(--s2); position:sticky; top:var(--s5); }
+.jshot{ position:relative; border-radius:var(--r-lg); overflow:hidden; border:1px solid var(--line); background:#0a0a16; }
+.jshot img{ width:100%; height:100%; object-fit:cover; aspect-ratio:4/3; }
+.jshot.tall img{ aspect-ratio:1/1; }
+.jshot .cap{
+  position:absolute; left:0; right:0; bottom:0; padding:34px 16px 13px;
+  background:linear-gradient(180deg,transparent,rgba(5,5,15,.9));
+  font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.16em;
+  text-transform:uppercase; color:#cfd1ff;
+}
+
+/* ============================================================
+   ROLES
+   ============================================================ */
+.roles{ display:grid; grid-template-columns:repeat(4,1fr); gap:0;
+  border-top:1px solid var(--dark-line); border-bottom:1px solid var(--dark-line); }
+.role{ padding:var(--s4) var(--s3); }
+.role + .role{ border-left:1px solid var(--dark-line); }
+.role .k{ font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--c); }
+.role h4{ margin:12px 0 8px; font-size:17px; }
+.role p{ font-size:13.5px; }
+
+/* ============================================================
+   FEATURES — index + detail
+   ============================================================ */
+.feat-layout{ display:grid; grid-template-columns:236px 1fr; gap:var(--s6); align-items:start; }
+.feat-index{ position:sticky; top:var(--s5); }
+.feat-index .ttl{ font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--faint); margin-bottom:var(--s2); }
+.feat-index ol{ list-style:none; counter-reset:fi; border-left:1px solid var(--line); }
+.feat-index li{ counter-increment:fi; }
+.feat-index a{
+  display:flex; gap:10px; padding:7px 0 7px 14px; text-decoration:none;
+  color:var(--muted); font-size:13px; line-height:1.35; border-left:2px solid transparent;
+  margin-left:-1px; transition:color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
+}
+.feat-index a::before{
+  content:counter(fi,decimal-leading-zero);
+  font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--faint); flex:none; padding-top:1px;
+}
+.feat-index a:hover{ color:var(--ink); border-left-color:var(--v); }
+
+.module{ padding:var(--s4) 0; border-top:1px solid var(--line); }
+.module:first-child{ border-top:0; padding-top:0; }
+.module .mhead{ display:flex; align-items:baseline; gap:14px; }
+.module .mno{ font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700;
+  color:var(--v); flex:none; }
+.module h3{ letter-spacing:-.02em; }
+.module .purpose{ font-size:14.5px; color:var(--muted); margin:8px 0 var(--s3); max-width:70ch; }
+/* Column flow so the five items read down the left column then down the right,
+   rather than zig-zagging across rows. */
+.module ul{ list-style:none; display:grid; grid-template-columns:1fr 1fr;
+  grid-template-rows:repeat(3,auto); grid-auto-flow:column; gap:10px var(--s4); }
+.module li{ position:relative; padding-left:18px; font-size:14px; line-height:1.5; color:var(--ink2); }
+.module li::before{
+  content:''; position:absolute; left:0; top:8px; width:6px; height:6px; border-radius:2px;
+  background:var(--grad);
+}
+
+/* ============================================================
+   ARCHITECTURE
+   ============================================================ */
+.arch{ display:grid; gap:var(--s2); margin-top:var(--s3); }
+.layer{
+  border:1px solid var(--dark-line); border-radius:var(--r-md); padding:var(--s3);
+  background:rgba(255,255,255,.035);
+  display:grid; grid-template-columns:184px 1fr; gap:var(--s3); align-items:center;
+}
+.layer .lname{ }
+.layer .lname .k{ font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--c); }
+.layer .lname h4{ margin-top:6px; font-size:16px; }
+.layer .nodes{ display:flex; flex-wrap:wrap; gap:8px; }
+.node{
+  font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.02em;
+  border:1px solid rgba(255,255,255,.14); border-radius:8px; padding:7px 11px;
+  color:#d6d8f5; background:rgba(255,255,255,.04); white-space:nowrap;
+}
+.node.hot{ border-color:rgba(124,58,237,.5); background:rgba(124,58,237,.16); color:#d9c9ff; }
+.flowmark{ text-align:center; color:var(--dark-faint); font-size:14px; line-height:1; }
+
+/* ============================================================
+   STACK TABLES
+   ============================================================ */
+.split{ display:grid; grid-template-columns:.86fr 1.14fr; gap:var(--s6); align-items:start; }
+.split.flip{ grid-template-columns:1.14fr .86fr; }
+.spec{ width:100%; border-collapse:collapse; }
+.spec th{
+  text-align:left; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--faint); font-weight:500; padding:0 0 10px;
+  border-bottom:1px solid var(--line);
+}
+.spec td{ padding:14px 0; border-bottom:1px solid var(--line2); vertical-align:top; font-size:14px; }
+.spec td:first-child{ width:26%; font-weight:700; color:var(--ink); padding-right:var(--s2); }
+.spec td:nth-child(2){ width:32%; font-family:'JetBrains Mono',monospace; font-size:12.5px;
+  color:var(--i); padding-right:var(--s2); line-height:1.5; }
+.spec td:last-child{ color:var(--muted); font-size:13.5px; }
+.dark .spec th{ color:var(--dark-faint); border-color:var(--dark-line); }
+.dark .spec td{ border-color:rgba(255,255,255,.06); }
+.dark .spec td:first-child{ color:#fff; }
+.dark .spec td:nth-child(2){ color:#a78bfa; }
+.dark .spec td:last-child{ color:var(--dark-ink2); }
+
+.notecard{
+  border:1px solid var(--line); border-left:3px solid var(--v); border-radius:var(--r-md);
+  padding:var(--s3); background:var(--paper2); margin-top:var(--s4);
+}
+.notecard .k{ font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--v); }
+.notecard p{ font-size:13.5px; margin-top:8px; }
+
+/* ============================================================
+   AI PIPELINE
+   ============================================================ */
+.pipe{ display:grid; grid-template-columns:repeat(6,1fr); gap:0; margin-top:var(--s5);
+  border:1px solid var(--dark-line); border-radius:var(--r-lg); overflow:hidden; }
+.pstep{ padding:var(--s3) var(--s2); position:relative; }
+.pstep + .pstep{ border-left:1px solid var(--dark-line); }
+.pstep .n{ font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--c); letter-spacing:.16em; }
+.pstep h4{ font-size:14px; margin:10px 0 7px; }
+.pstep p{ font-size:12.5px; line-height:1.5; }
+.pstep.loop{ background:rgba(124,58,237,.12); }
+
+/* ============================================================
+   ENTITIES
+   ============================================================ */
+.ents{ display:grid; grid-template-columns:repeat(3,1fr); gap:var(--s2) var(--s5); margin-top:var(--s4); }
+.ent{ border-top:1px solid var(--line); padding-top:12px; }
+.ent .n{ font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:700; color:var(--i); }
+.ent .d{ font-size:12.5px; color:var(--muted); margin-top:4px; line-height:1.45; }
+
+/* ============================================================
+   CHECKLIST
+   ============================================================ */
+.checks{ display:grid; grid-template-columns:1fr 1fr; gap:0 var(--s6); }
+.check{ display:flex; gap:13px; padding:15px 0; border-bottom:1px solid var(--line2); }
+.check .ic{ width:19px; height:19px; border-radius:5px; flex:none; margin-top:2px;
+  background:rgba(124,58,237,.10); border:1px solid rgba(124,58,237,.28);
+  display:grid; place-items:center; }
+.check .ic::after{ content:''; width:8px; height:4.5px; border-left:1.8px solid var(--v);
+  border-bottom:1.8px solid var(--v); transform:rotate(-45deg) translate(1px,-1px); }
+.check .tx b{ display:block; font-size:14.5px; }
+.check .tx span{ font-size:13px; color:var(--muted); }
+
+/* ============================================================
+   GANTT
+   ============================================================ */
+.gantt{ margin-top:var(--s5); }
+.gscale{ display:grid; grid-template-columns:190px repeat(12,1fr); gap:0;
+  padding-bottom:10px; border-bottom:1px solid var(--dark-line); }
+.gscale .lb{ font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.18em;
+  text-transform:uppercase; color:var(--dark-faint); }
+.gscale .w{ font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--dark-faint);
+  text-align:center; }
+.gscale .w.split-l{ box-shadow:inset 1px 0 0 rgba(167,139,250,.5); }
+.grow{ display:grid; grid-template-columns:190px repeat(12,1fr); align-items:center;
+  padding:11px 0; border-bottom:1px solid rgba(255,255,255,.055); }
+.grow .name{ padding-right:var(--s2); }
+.grow .name b{ display:block; font-size:13.5px; color:#fff; font-weight:700; }
+.grow .name span{ font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--dark-faint);
+  letter-spacing:.14em; text-transform:uppercase; }
+.bar{ grid-column:var(--from) / var(--to); height:26px; border-radius:7px;
+  background:var(--grad); display:flex; align-items:center; padding:0 10px;
+  font-family:'JetBrains Mono',monospace; font-size:10px; color:#fff; letter-spacing:.06em;
+  transform-origin:0 50%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.js-motion .bar{ transform:scaleX(0); }
+.js-motion .bar.in{ transform:none; transition:transform 700ms var(--ease) var(--d,0ms); }
+.bar.test{ background:linear-gradient(120deg,#18bccf,#3a33c9); }
+.bar.ghost{ background:rgba(255,255,255,.08); border:1px dashed rgba(255,255,255,.22); color:#b4b7d4; }
+.phaselegend{ display:flex; gap:var(--s4); margin-top:var(--s4); flex-wrap:wrap; }
+.phaselegend .li{ display:flex; align-items:center; gap:9px;
+  font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--dark-ink2); }
+.phaselegend .sw{ width:22px; height:9px; border-radius:3px; }
+
+.miles{ display:grid; grid-template-columns:repeat(6,1fr); gap:var(--s2); margin-top:var(--s5); }
+.mile{ border:1px solid var(--dark-line); border-radius:var(--r-md); padding:15px;
+  background:rgba(255,255,255,.035); }
+.mile .k{ font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.12em;
+  color:var(--c); }
+.mile b{ display:block; font-size:13px; margin-top:8px; color:#fff; line-height:1.35; }
+.mile span{ font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--dark-faint);
+  display:block; margin-top:7px; }
+
+/* ============================================================
+   SPRINT DETAIL
+   ============================================================ */
+.sprints{ display:grid; grid-template-columns:1fr 1fr; gap:var(--s2); }
+.sprint{ border:1px solid var(--line); border-radius:var(--r-lg); padding:var(--s4); background:var(--paper); }
+.sprint.testp{ background:var(--paper2); border-color:var(--line); }
+.sprint .top{ display:flex; align-items:baseline; justify-content:space-between; gap:var(--s2); }
+.sprint .wk{ font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.18em;
+  text-transform:uppercase; color:var(--v); }
+.sprint h3{ margin:10px 0 var(--s2); font-size:19px; }
+.sprint ul{ list-style:none; }
+.sprint li{ position:relative; padding-left:17px; font-size:13.5px; line-height:1.5; color:var(--ink2); }
+.sprint li + li{ margin-top:8px; }
+.sprint li::before{ content:''; position:absolute; left:0; top:8px; width:5px; height:5px;
+  border-radius:50%; background:var(--v); }
+.sprint .exit{ margin-top:var(--s3); padding-top:var(--s2); border-top:1px dashed var(--line);
+  font-size:12.5px; color:var(--muted); }
+.sprint .exit b{ font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.18em;
+  text-transform:uppercase; color:var(--i); display:block; margin-bottom:5px; }
+
+
+/* ============================================================
+   RISK TABLE
+   ============================================================ */
+.risk{ width:100%; border-collapse:collapse; margin-top:var(--s4); }
+.risk th{ text-align:left; font-family:'JetBrains Mono',monospace; font-size:11px;
+  letter-spacing:.2em; text-transform:uppercase; color:var(--faint); font-weight:500;
+  padding:0 var(--s2) 11px 0; border-bottom:1px solid var(--line); }
+.risk td{ padding:16px var(--s2) 16px 0; border-bottom:1px solid var(--line2);
+  vertical-align:top; font-size:13.5px; color:var(--ink2); }
+.risk td:first-child{ font-weight:700; color:var(--ink); width:24%; }
+.risk td:last-child{ padding-right:0; }
+.lvl{ font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.14em;
+  text-transform:uppercase; padding:3px 8px; border-radius:99px; white-space:nowrap; }
+.lvl.h{ color:#b42318; background:rgba(239,68,68,.10); border:1px solid rgba(239,68,68,.25); }
+.lvl.m{ color:#a15c07; background:rgba(245,158,11,.10); border:1px solid rgba(245,158,11,.28); }
+.lvl.l{ color:#067647; background:rgba(16,185,129,.10); border:1px solid rgba(16,185,129,.25); }
+
+/* ============================================================
+   TWO-COL LISTS
+   ============================================================ */
+.twocol{ display:grid; grid-template-columns:1fr 1fr; gap:var(--s6); margin-top:var(--s4); }
+.listblock .k{ font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--i); padding-bottom:12px; border-bottom:1px solid var(--line);
+  display:block; }
+.listblock ul{ list-style:none; margin-top:var(--s2); }
+.listblock li{ position:relative; padding-left:19px; font-size:13.5px; line-height:1.55; color:var(--ink2); }
+.dark .listblock li{ color:var(--dark-ink2); }
+.listblock li + li{ margin-top:10px; }
+.listblock li::before{ content:''; position:absolute; left:0; top:9px; width:7px; height:1.5px;
+  background:var(--faint); }
+.dark .listblock li::before{ background:var(--c); }
+
+/* ============================================================
+   CLOSE
+   ============================================================ */
+.close{ background:
+    radial-gradient(46% 44% at 82% 10%, rgba(124,58,237,.20), transparent 70%),
+    radial-gradient(40% 40% at 8% 92%, rgba(24,188,207,.12), transparent 70%),
+    var(--dark); }
+.next{ display:grid; grid-template-columns:repeat(4,1fr); gap:var(--s2); margin-top:var(--s5); }
+.nx{ border:1px solid var(--dark-line); border-radius:var(--r-md); padding:var(--s3);
+  background:rgba(255,255,255,.035); }
+.nx .n{ font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--c); }
+.nx b{ display:block; font-size:14px; color:#fff; margin:9px 0 6px; }
+.nx p{ font-size:12.5px; }
+
+.signoff{ display:grid; grid-template-columns:1fr 1fr; gap:var(--s6); margin-top:var(--s7);
+  padding-top:var(--s4); border-top:1px solid var(--dark-line); }
+.sig .k{ font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--dark-faint); }
+.sig .line{ height:1px; background:rgba(255,255,255,.22); margin:var(--s5) 0 10px; }
+.sig .who{ font-size:14px; color:#fff; font-weight:700; }
+.sig .sub{ font-size:12px; color:var(--dark-faint); }
+
+footer{ padding:var(--s4) 0 var(--s5); background:var(--dark); }
+footer .fbar{ display:flex; justify-content:space-between; align-items:center; gap:var(--s3);
+  flex-wrap:wrap; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--dark-faint); }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width:1080px){
+  .cover-grid,.plain-grid,.split,.split.flip,.journey-wrap{ grid-template-columns:1fr; gap:var(--s5); }
+  .jshots{ position:static; grid-template-columns:repeat(3,1fr); }
+  .feat-layout{ grid-template-columns:1fr; }
+  .feat-index{ position:static; display:none; }
+  .roles,.tiles,.miles,.next{ grid-template-columns:repeat(2,1fr); }
+  .role + .role{ border-left:0; }
+  .role:nth-child(2n){ border-left:1px solid var(--dark-line); }
+  .pipe,.ents{ grid-template-columns:repeat(2,1fr); }
+  .pstep + .pstep{ border-left:0; }
+  .pstep:nth-child(2n){ border-left:1px solid var(--dark-line); }
+}
+@media (max-width:760px){
+  section{ padding:var(--s7) 0; }
+  .wrap{ padding:0 var(--s3); }
+  .sec-head{ flex-direction:column; gap:var(--s1); }
+  .sec-no{ padding-top:0; }
+  .compare,.module ul,.checks,.sprints,.twocol,.jshots{ grid-template-columns:1fr; }
+  .module ul{ grid-auto-flow:row; grid-template-rows:none; }
+  .compare .col:first-child{ border-right:0; border-bottom:1px solid var(--line); }
+  .tiles,.roles,.miles,.next,.pipe,.ents{ grid-template-columns:1fr; }
+  .role + .role,.role:nth-child(2n){ border-left:0; border-top:1px solid var(--dark-line); }
+  .pstep + .pstep,.pstep:nth-child(2n){ border-left:0; border-top:1px solid var(--dark-line); }
+  .party{ grid-template-columns:1fr; max-width:none; }
+  .layer{ grid-template-columns:1fr; gap:var(--s2); }
+  .viewport{ min-width:0; }
+  .viewport .chrome{ font-size:9px; letter-spacing:.1em; gap:6px; padding:0 10px; }
+  .viewport .chrome .right{ display:none; }
+  /* Spec tables become stacked rows rather than a squeezed three-column grid. */
+  .spec, .spec tbody, .spec tr, .spec td{ display:block; width:auto; }
+  .spec thead{ display:none; }
+  .spec tr{ padding:14px 0; border-bottom:1px solid var(--line2); }
+  .spec td{ border:0; padding:0; width:auto !important; }
+  .spec td:first-child{ font-size:15px; padding-right:0; }
+  .spec td:nth-child(2){ margin:4px 0 6px; padding-right:0; }
+  .risk td:first-child{ width:auto; }
+  .gscale,.grow{ grid-template-columns:120px repeat(12,1fr); }
+  .grow .name b{ font-size:12px; }
+  .bar{ font-size:0; padding:0 4px; }
+  .gantt{ overflow-x:auto; }
+  .signoff{ grid-template-columns:1fr; }
+}
+
+/* ============================================================
+   MOTION OPT-OUT
+   ============================================================ */
+@media (prefers-reduced-motion: reduce){
+  html{ scroll-behavior:auto; }
+  *,*::before,*::after{
+    animation-duration:.001ms !important; animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;
+  }
+  .js-motion .rv{ opacity:1; transform:none; }
+  .js-motion .bar{ transform:none; }
+  .det,.viewport .verdict{ opacity:1; }
+  .scan{ display:none; }
+}
+
+/* ============================================================
+   PRINT — A4 export
+   ============================================================ */
+@media print{
+  @page{ size:A4; margin:12mm 11mm; }
+  html,body{ background:#fff; font-size:9.6px; }
+  *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  .progress,.scrollcue,.scan{ display:none !important; }
+  .rv,.js-motion .rv{ opacity:1 !important; transform:none !important; }
+  .bar,.js-motion .bar{ transform:none !important; }
+  .det,.viewport .verdict{ opacity:1 !important; animation:none !important; }
+  /* Sections flow across pages; only self-contained blocks are kept whole. */
+  section{ padding:9mm 0; break-inside:auto; }
+  section.tight{ padding:8mm 0; }
+  .cover{ min-height:auto; padding:0 0 10mm; break-after:page; }
+  .sec-head{ margin-bottom:7mm; break-after:avoid; }
+  h2,h3{ break-after:avoid; }
+  .module,.sprint,.mile,.step,.tile,.layer,.jshot,.check,.nx,.tm,.role,.pstep,
+  .ent,.compare,.outputs > div,.risk tr{ break-inside:avoid; }
+  .wrap{ max-width:100%; padding:0; }
+  .feat-index{ display:none; }
+  .feat-layout{ grid-template-columns:1fr; }
+  .jshots{ position:static; grid-template-columns:repeat(3,1fr); }
+  .journey-wrap{ grid-template-columns:1fr; gap:8mm; }
+  .cover-grid{ gap:8mm; }
+  h1{ font-size:34pt; }
+  /* Apple's PDF viewers can paint a solid box over gradient-clipped text; the
+     wordmark falls back to the ring's violet for the printed/exported copy. */
+  .lock .word{ background:none !important; -webkit-text-fill-color:#a78bfa !important;
+    color:#a78bfa !important; }
+  .dark,.close,footer{ background:#05050f !important; }
+}
+</style>
+<style>
+/* ============================================================
+   SOW-SPECIFIC COMPONENTS  (layered on the shared house system)
+   ============================================================ */
+
+/* document-control panel on the cover */
+.dctrl{ display:grid; grid-template-columns:repeat(2,1fr); gap:1px;
+  border:1px solid var(--dark-line); border-radius:var(--r-lg); overflow:hidden;
+  background:var(--dark-line); margin-top:var(--s5); max-width:560px; }
+.dctrl .cell{ background:var(--dark); padding:14px 16px; }
+.dctrl .k{ font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--dark-faint); }
+.dctrl .v{ font-size:14px; font-weight:700; color:#fff; margin-top:6px; }
+.dctrl .cell.wide{ grid-column:1 / -1; }
+
+/* definitions / glossary */
+.dl{ display:grid; grid-template-columns:200px 1fr; gap:0; margin-top:var(--s4);
+  border-top:1px solid var(--line); }
+.dl dt{ font-weight:700; font-size:14px; color:var(--ink); padding:14px var(--s3) 14px 0;
+  border-bottom:1px solid var(--line2); }
+.dl dd{ font-size:14px; color:var(--ink2); padding:14px 0; border-bottom:1px solid var(--line2); }
+
+/* deliverable tables with an ID column */
+.deliv{ width:100%; border-collapse:collapse; margin-top:var(--s3); }
+.deliv th{ text-align:left; font-family:'JetBrains Mono',monospace; font-size:11px;
+  letter-spacing:.16em; text-transform:uppercase; color:var(--faint); font-weight:500;
+  padding:0 var(--s2) 11px 0; border-bottom:1px solid var(--line); vertical-align:bottom; }
+.deliv td{ padding:15px var(--s2) 15px 0; border-bottom:1px solid var(--line2);
+  vertical-align:top; font-size:13.5px; color:var(--ink2); }
+.deliv td.id{ font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700;
+  color:var(--v); white-space:nowrap; width:52px; }
+.deliv td.name{ font-weight:700; color:var(--ink); width:24%; }
+.deliv td.name span{ display:block; font-weight:400; font-size:12.5px; color:var(--muted); margin-top:4px; }
+.deliv td.acc{ width:30%; font-size:13px; color:var(--muted); }
+.wsband{ display:flex; align-items:baseline; gap:12px; margin:var(--s5) 0 6px; }
+.wsband .wsno{ font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; color:var(--v); }
+.wsband h3{ font-size:19px; }
+.wsband .tag{ margin-left:auto; font-family:'JetBrains Mono',monospace; font-size:11px;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--faint); }
+
+/* responsibility split (party-level, no internal roles) */
+.resp{ display:grid; grid-template-columns:1fr 1fr; gap:0; margin-top:var(--s4);
+  border:1px solid var(--line); border-radius:var(--r-lg); overflow:hidden; }
+.resp .col{ padding:var(--s4); }
+.resp .col:first-child{ border-right:1px solid var(--line); background:var(--paper2); }
+.resp .h{ display:flex; align-items:center; gap:9px; margin-bottom:var(--s3); }
+.resp .h .lbl{ font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.18em;
+  text-transform:uppercase; color:var(--muted); }
+.resp ul{ list-style:none; }
+.resp li{ position:relative; padding-left:20px; font-size:13.5px; line-height:1.55; color:var(--ink2); }
+.resp li + li{ margin-top:11px; }
+.resp li::before{ content:''; position:absolute; left:0; top:8px; width:7px; height:7px;
+  border-radius:2px; background:var(--grad); }
+
+/* payment schedule */
+.pay{ width:100%; border-collapse:collapse; margin-top:var(--s3); }
+.pay th{ text-align:left; font-family:'JetBrains Mono',monospace; font-size:11px;
+  letter-spacing:.16em; text-transform:uppercase; color:var(--faint); font-weight:500;
+  padding:0 var(--s2) 11px 0; border-bottom:1px solid var(--line); }
+.pay td{ padding:14px var(--s2) 14px 0; border-bottom:1px solid var(--line2);
+  vertical-align:top; font-size:13.5px; color:var(--ink2); }
+.pay td.mstone{ font-weight:700; color:var(--ink); width:30%; }
+.pay td.pct{ font-family:'JetBrains Mono',monospace; font-weight:700; color:var(--i);
+  text-align:right; white-space:nowrap; }
+.pay td.amt{ font-family:'JetBrains Mono',monospace; color:var(--muted); text-align:right;
+  white-space:nowrap; }
+.pay tr.total td{ border-bottom:none; border-top:2px solid var(--line); font-weight:800;
+  color:var(--ink); padding-top:15px; }
+.pay tr.total td.pct, .pay tr.total td.amt{ color:var(--ink); }
+
+/* numbered contractual clauses */
+.clauses{ counter-reset:cl; margin-top:var(--s3); }
+.clause{ counter-increment:cl; position:relative; padding:14px 0 14px 46px;
+  border-bottom:1px solid var(--line2); }
+.clause::before{ content:counter(cl,decimal-leading-zero); position:absolute; left:0; top:14px;
+  font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; color:var(--v); }
+.clause b{ display:block; font-size:14.5px; margin-bottom:4px; }
+.clause p{ font-size:13.5px; color:var(--ink2); }
+
+/* severity key */
+.sev{ display:grid; grid-template-columns:repeat(4,1fr); gap:var(--s2); margin-top:var(--s4); }
+.sevcard{ border:1px solid var(--line); border-radius:var(--r-md); padding:var(--s3); }
+.sevcard .lv{ font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.12em;
+  text-transform:uppercase; font-weight:700; }
+.sevcard h4{ font-size:14px; margin:9px 0 6px; }
+.sevcard p{ font-size:12.5px; color:var(--muted); line-height:1.5; }
+.sevcard .fix{ font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--i);
+  margin-top:10px; display:block; }
+
+/* callout note (dark & light variants inherit .notecard) */
+.legalnote{ border:1px solid var(--line); border-left:3px solid var(--warn);
+  border-radius:var(--r-md); padding:var(--s3); background:var(--paper2); margin-top:var(--s4); }
+.legalnote .k{ font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.18em;
+  text-transform:uppercase; color:#a15c07; }
+.legalnote p{ font-size:13px; margin-top:8px; color:var(--ink2); }
+
+/* pipe-step labels carry week numbers here; keep at the 11px mono floor */
+.pstep .n{ font-size:11px; }
+
+@media (max-width:900px){
+  .dctrl,.dl,.resp,.sev{ grid-template-columns:1fr; }
+  .resp .col:first-child{ border-right:0; border-bottom:1px solid var(--line); }
+  .dl dt{ padding-bottom:2px; border-bottom:0; }
+  .dl dd{ padding-top:4px; }
+}
+@media print{
+  .deliv tr,.clause,.sevcard,.resp,.pay tr,.dl > *{ break-inside:avoid; }
+  .wsband{ break-after:avoid; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress"><i id="pbar"></i></div>
+
+<!-- ============================================================
+     COVER
+     ============================================================ -->
+<section class="cover dark" style="min-height:auto; padding:var(--s7) 0 var(--s6);">
+  <div class="wrap">
+    <div class="lock rv">
+      <svg class="mark" viewBox="0 0 179 100" role="img" aria-label="Pixorama">
+        <defs>
+          <linearGradient id="pxo" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#4f2fdb" /><stop offset=".55" stop-color="#7c3aed" /><stop offset="1" stop-color="#c13ccf" />
+          </linearGradient>
+        </defs>
+        <rect x="0" y="0" width="100" height="100" rx="27" fill="url(#pxo)" />
+        <text x="50" y="50" fill="#fff" font-family="Manrope,sans-serif" font-size="44" font-weight="800" letter-spacing="-1" text-anchor="middle" dominant-baseline="central">PX</text>
+        <circle cx="142" cy="50" r="30" fill="none" stroke="#6d55e8" stroke-width="13" />
+      </svg>
+      <span class="word">Pixorama<em>.</em></span>
+    </div>
+
+    <div class="eyebrow rv" style="--d:60ms; margin-top:40px">Statement of Work · SOW-2026-011</div>
+    <h1 class="rv" style="--d:120ms; font-size:clamp(34px,4.6vw,58px)">AI Device Inspector<span class="l2">Statement of Work.</span></h1>
+    <p class="lead rv" style="--d:180ms; max-width:60ch">
+      This Statement of Work sets out the deliverables, acceptance criteria, timeline,
+      responsibilities and commercial terms for the design, build and delivery of the
+      AI Device Inspector platform. It operationalises the accompanying platform proposal
+      and, once signed, governs the engagement.
+    </p>
+
+    <div class="dctrl rv" style="--d:240ms">
+      <div class="cell"><div class="k">Client</div><div class="v">Hugo Martinez</div></div>
+      <div class="cell"><div class="k">Supplier</div><div class="v">Pixorama Group</div></div>
+      <div class="cell"><div class="k">Document</div><div class="v">SOW-2026-011 · v1.0</div></div>
+      <div class="cell"><div class="k">Date of issue</div><div class="v">24 July 2026</div></div>
+      <div class="cell"><div class="k">Engagement</div><div class="v">Fixed scope · 12 weeks</div></div>
+      <div class="cell"><div class="k">Related document</div><div class="v">AI Device Inspector — Platform Proposal</div></div>
+      <div class="cell wide"><div class="k">Status</div><div class="v">For review &amp; signature — supersedes prior scope discussions on execution</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     01 · INTRODUCTION
+     ============================================================ -->
+<section id="intro" class="tight">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="sec-no">01</div>
+      <div class="t">
+        <div class="eyebrow">Purpose &amp; structure</div>
+        <h2>Introduction</h2>
+      </div>
+    </div>
+    <div class="split">
+      <div class="rv">
+        <p class="lead">
+          This document is the definitive statement of what Pixorama will deliver, how each
+          deliverable will be accepted, and the terms under which the work proceeds.
+        </p>
+        <p style="margin-top:18px">
+          Where this Statement of Work and the platform proposal differ, this document
+          prevails on matters of scope, acceptance, schedule and commercials. Anything not
+          expressly listed as in scope in Section 05 or 06 is out of scope and is handled
+          through the change-control process in Section 14.
+        </p>
+      </div>
+      <div class="rv" style="--d:80ms">
+        <div class="clauses">
+          <div class="clause"><b>Scope</b><p>Sections 04–06 define exactly what is built; Section 07 states what is not.</p></div>
+          <div class="clause"><b>Delivery</b><p>Sections 10–11 set the method, timeline and milestones.</p></div>
+          <div class="clause"><b>Acceptance</b><p>Sections 12–13 define how deliverables are tested and signed off.</p></div>
+          <div class="clause"><b>Commercials</b><p>Sections 14–16 govern change, payment and warranty.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     02 · DEFINITIONS
+     ============================================================ -->
+<section id="definitions" class="tint tight">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="sec-no">02</div>
+      <div class="t">
+        <div class="eyebrow">Terms</div>
+        <h2>Definitions</h2>
+        <p class="lead">Capitalised terms used throughout this document carry the meanings below.</p>
+      </div>
+    </div>
+    <dl class="dl rv">
+      <dt>Platform</dt><dd>The AI Device Inspector software system described in Sections 04–06, in all its surfaces (station kiosk, back-office application, client portal) and services.</dd>
+      <dt>Deliverable</dt><dd>A discrete, identified output listed in Section 05 or 06, each with its own acceptance basis.</dd>
+      <dt>Edge Node</dt><dd>The on-site hardware and software that owns the cameras and runs inference at a facility.</dd>
+      <dt>Detection</dt><dd>A single defect identified by the model on a captured image, with class, confidence, severity and region.</dd>
+      <dt>Grade Profile</dt><dd>A configurable, versioned rule set that converts a confirmed defect set into a commercial grade for a given buyer.</dd>
+      <dt>Holdout Set</dt><dd>A frozen, labelled sample of images used once to measure model accuracy and never used for training.</dd>
+      <dt>UAT</dt><dd>User Acceptance Testing — structured testing performed by the Client's own operators and supervisors against agreed scripts.</dd>
+      <dt>Go-Live</dt><dd>The point at which the Platform is used to process live production stock on at least one line.</dd>
+      <dt>Business Day</dt><dd>Monday to Friday excluding public holidays in the Client's jurisdiction.</dd>
+    </dl>
+  </div>
+</section>
+
+<!-- ============================================================
+     03 · OBJECTIVES
+     ============================================================ -->
+<section id="objectives" class="tight">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="sec-no">03</div>
+      <div class="t">
+        <div class="eyebrow">Why</div>
+        <h2>Project objectives</h2>
+        <p class="lead">The Platform is accepted as meeting its purpose when it delivers against these objectives, evidenced by the acceptance criteria in Sections 12–13.</p>
+      </div>
+    </div>
+    <div class="checks rv">
+      <div class="check"><span class="ic"></span><span class="tx"><b>Consistent grading</b><span>One model and one rule set applied to every device, independent of operator or shift.</span></span></div>
+      <div class="check"><span class="ic"></span><span class="tx"><b>Speed</b><span>Capture-to-grade in under 60 seconds per device on the target hardware.</span></span></div>
+      <div class="check"><span class="ic"></span><span class="tx"><b>Defensibility</b><span>Every grade backed by photographs, a defect map and a complete audit trail.</span></span></div>
+      <div class="check"><span class="ic"></span><span class="tx"><b>Measurable accuracy</b><span>Detection performance proven against a frozen holdout set to an agreed threshold.</span></span></div>
+      <div class="check"><span class="ic"></span><span class="tx"><b>Operational visibility</b><span>Throughput, yield and defect trends visible to supervisors and administrators.</span></span></div>
+      <div class="check"><span class="ic"></span><span class="tx"><b>Integration</b><span>Records flow to the Client's existing systems without manual re-keying.</span></span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     04 · SCOPE OVERVIEW
+     ============================================================ -->
+<section id="scope-overview" class="dark">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="sec-no" style="color:var(--dark-faint)">04</div>
+      <div class="t">
+        <div class="eyebrow">What is being built</div>
+        <h2>Scope overview</h2>
+        <p class="lead">
+          The engagement delivers a production-ready, multi-tenant platform of
+          <strong>12 functional modules</strong> comprising <strong>60 features</strong>,
+          organised for delivery into six workstreams, plus the AI model, infrastructure and
+          documentation. The detailed deliverables follow in Section 05; the technical
+          deliverables in Section 06.
+        </p>
+      </div>
+    </div>
+
+    <div class="pipe rv" style="grid-template-columns:repeat(3,1fr)">
+      <div class="pstep"><div class="n">WS1</div><h4>Foundations</h4><p>Access, roles, tenancy, environments, design system, app shell.</p></div>
+      <div class="pstep"><div class="n">WS2</div><h4>Capture</h4><p>Inspection station and the six-angle capture workflow.</p></div>
+      <div class="pstep"><div class="n">WS3</div><h4>AI engine</h4><p>Detection model, inference service and the training loop.</p></div>
+      <div class="pstep"><div class="n">WS4</div><h4>Review &amp; grading</h4><p>Annotation, correction, grading engine and disposition.</p></div>
+      <div class="pstep"><div class="n">WS5</div><h4>Records &amp; data</h4><p>History, reporting, imports, exports and integrations.</p></div>
+      <div class="pstep"><div class="n">WS6</div><h4>Insight &amp; admin</h4><p>Dashboard, analytics, administration and audit.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     05 · DETAILED DELIVERABLES
+     ============================================================ -->
+<section id="deliverables">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="sec-no">05</div>
+      <div class="t">
+        <div class="eyebrow">In scope</div>
+        <h2>Detailed deliverables</h2>
+        <p class="lead">
+          Every deliverable below is committed to the build and is individually acceptance-tested.
+          Deliverable IDs (D-xx) are referenced by the acceptance and milestone schedules.
+        </p>
+      </div>
+    </div>
+
+    <!-- WS1 -->
+    <div class="wsband rv"><span class="wsno">WS1</span><h3>Platform foundations</h3><span class="tag">Modules 01</span></div>
+    <table class="deliv rv">
+      <thead><tr><th>ID</th><th>Deliverable</th><th>Includes</th><th>Acceptance basis</th></tr></thead>
+      <tbody>
+        <tr><td class="id">D-01</td><td class="name">Access &amp; authentication</td><td>Email/password with optional 2FA; enterprise SSO (SAML 2.0 / OIDC); rotating session tokens.</td><td class="acc">A user signs in by each method and receives correct role and tenant context.</td></tr>
+        <tr><td class="id">D-02</td><td class="name">Roles &amp; permissions</td><td>Operator, Supervisor, Admin and Client roles with a published permission matrix enforced server-side.</td><td class="acc">Automated per-role permission tests pass; forbidden actions are refused by the API.</td></tr>
+        <tr><td class="id">D-03</td><td class="name">Multi-tenant isolation</td><td>Row-level security so one client's data is never returned to another.</td><td class="acc">Cross-tenant access tests return no data; verified in security testing (Section 13).</td></tr>
+        <tr><td class="id">D-04</td><td class="name">Station kiosk sessions</td><td>Device-bound tokens, idle lock, fast operator switching.</td><td class="acc">A station authenticates as a device; operators switch without full re-login; idle lock engages.</td></tr>
+        <tr><td class="id">D-05</td><td class="name">Design system &amp; app shell</td><td>Token set (colour, type, spacing, motion), component library, navigation and layouts for all three surfaces.</td><td class="acc">Component library published; all subsequent screens assembled from it.</td></tr>
+      </tbody>
+    </table>
+
+    <!-- WS2 -->
+    <div class="wsband rv"><span class="wsno">WS2</span><h3>Inspection station &amp; capture</h3><span class="tag">Module 03</span></div>
+    <table class="deliv rv">
+      <thead><tr><th>ID</th><th>Deliverable</th><th>Includes</th><th>Acceptance basis</th></tr></thead>
+      <tbody>
+        <tr><td class="id">D-06</td><td class="name">Guided capture workflow</td><td>Six-state flow: scan → verify → position → capture → analyse → review.</td><td class="acc">An operator completes the full flow for a device end to end on station hardware.</td></tr>
+        <tr><td class="id">D-07</td><td class="name">Device identification</td><td>Barcode/QR scan and OCR service-tag reading, with manual entry fallback and device lookup (model, spec, prior inspections, warranty).</td><td class="acc">A scanned device resolves to its record; manual entry works where scan fails.</td></tr>
+        <tr><td class="id">D-08</td><td class="name">Six-angle capture</td><td>Single-trigger capture of six angles with per-angle retake and focus/exposure validation.</td><td class="acc">All six angles captured; blurred/over-exposed frames are rejected and re-shot.</td></tr>
+        <tr><td class="id">D-09</td><td class="name">Offline tolerance</td><td>Local capture queue with automatic sync on reconnect.</td><td class="acc">Captures taken with the network disabled complete and sync when it returns.</td></tr>
+      </tbody>
+    </table>
+
+    <!-- WS3 -->
+    <div class="wsband rv"><span class="wsno">WS3</span><h3>AI detection engine</h3><span class="tag">Module 04 · model</span></div>
+    <table class="deliv rv">
+      <thead><tr><th>ID</th><th>Deliverable</th><th>Includes</th><th>Acceptance basis</th></tr></thead>
+      <tbody>
+        <tr><td class="id">D-10</td><td class="name">Defect taxonomy</td><td>20+ classes across cosmetic, display and hardware, signed off with the Client.</td><td class="acc">Taxonomy document approved by the Client in writing.</td></tr>
+        <tr><td class="id">D-11</td><td class="name">Detection model</td><td>Segmentation + classification, fine-tuned on Client intake photography; per-detection confidence, four-level severity, bounding region and heat map.</td><td class="acc">Model returns detections on live captures; accuracy gate in Section 13 met.</td></tr>
+        <tr><td class="id">D-12</td><td class="name">Inference service</td><td>Model served on the Edge Node GPU, with confidence thresholds and auto-escalation to review.</td><td class="acc">Inference completes within the per-image time budget on target hardware.</td></tr>
+        <tr><td class="id">D-13</td><td class="name">Model versioning &amp; retrain loop</td><td>Every result stamped with its model version; operator corrections queued into the training set; candidate-vs-incumbent evaluation.</td><td class="acc">Results carry a version; a retrain run is demonstrated against the holdout set.</td></tr>
+      </tbody>
+    </table>
+
+    <!-- WS4 -->
+    <div class="wsband rv"><span class="wsno">WS4</span><h3>Review, grading &amp; disposition</h3><span class="tag">Modules 05–06</span></div>
+    <table class="deliv rv">
+      <thead><tr><th>ID</th><th>Deliverable</th><th>Includes</th><th>Acceptance basis</th></tr></thead>
+      <tbody>
+        <tr><td class="id">D-14</td><td class="name">Annotated review viewer</td><td>Bounding boxes, heat-map toggle, zoom-to-defect; cursor tool to resize an AI region or draw a missed one on the photo.</td><td class="acc">An operator resizes and draws regions; changes persist and are audited.</td></tr>
+        <tr><td class="id">D-15</td><td class="name">Detection management</td><td>Accept, reject, reclassify, change severity, merge duplicates; low-confidence queue with supervisor routing.</td><td class="acc">Each action updates the record and writes an audit entry.</td></tr>
+        <tr><td class="id">D-16</td><td class="name">Grading engine</td><td>Cosmetic and functional grades (A–F) and a 0–100 health score from configurable rules; per-client grade profiles.</td><td class="acc">A confirmed defect set produces the expected grade for a given profile.</td></tr>
+        <tr><td class="id">D-17</td><td class="name">Disposition &amp; override</td><td>Recommended disposition (resell / repair / parts / recycle); supervisor override with mandatory reason code.</td><td class="acc">Overrides require a reason and are captured in the record.</td></tr>
+      </tbody>
+    </table>
+
+    <!-- WS5 -->
+    <div class="wsband rv"><span class="wsno">WS5</span><h3>Records, reporting &amp; data</h3><span class="tag">Modules 07–09</span></div>
+    <table class="deliv rv">
+      <thead><tr><th>ID</th><th>Deliverable</th><th>Includes</th><th>Acceptance basis</th></tr></thead>
+      <tbody>
+        <tr><td class="id">D-18</td><td class="name">Inspection history</td><td>Virtualised 16-column grid for 100k+ records; global search, advanced filters, saved presets, bulk actions, role-gated inline editing, saved views.</td><td class="acc">Grid performs at target with a representative dataset; filters and bulk actions behave.</td></tr>
+        <tr><td class="id">D-19</td><td class="name">Inspection record &amp; report</td><td>Tabbed record (overview, images, AI results, audit, edit); full-res viewer; branded PDF certificate with tamper-evident hash; expiring read-only share link.</td><td class="acc">A certificate generates with correct data and hash; a share link expires as configured.</td></tr>
+        <tr><td class="id">D-20</td><td class="name">Import &amp; export</td><td>Five-step CSV import wizard; export to CSV, XLSX, PDF and JSON, filtered or bulk.</td><td class="acc">A sample file imports with validation; exports produce correct content in each format.</td></tr>
+        <tr><td class="id">D-21</td><td class="name">Integrations</td><td>REST API with OpenAPI spec and signed webhooks; one ERP/WMS connector; ZPL label printing; scheduled buyer feeds (SFTP/S3).</td><td class="acc">A record change fires a signed webhook; the connector posts to the agreed endpoint.</td></tr>
+      </tbody>
+    </table>
+
+    <!-- WS6 -->
+    <div class="wsband rv"><span class="wsno">WS6</span><h3>Insight &amp; administration</h3><span class="tag">Modules 02, 10–12</span></div>
+    <table class="deliv rv">
+      <thead><tr><th>ID</th><th>Deliverable</th><th>Includes</th><th>Acceptance basis</th></tr></thead>
+      <tbody>
+        <tr><td class="id">D-22</td><td class="name">Dashboard &amp; live floor</td><td>Live station tiles, shift KPIs, throughput and defect-mix charts, alert feed, operator activity summary.</td><td class="acc">Dashboard reflects live station state and correct KPIs for a shift.</td></tr>
+        <tr><td class="id">D-23</td><td class="name">Analytics</td><td>Throughput, cycle time, yield and rework by station/shift; grade distribution; defect Pareto by supplier; AI-vs-human agreement; date ranges, CSV export, scheduled digest.</td><td class="acc">Reports compute correctly against known data; digest is delivered on schedule.</td></tr>
+        <tr><td class="id">D-24</td><td class="name">Administration</td><td>Client, user, role and station management with camera calibration; taxonomy and severity-rule editor; grade-profile builder with historic preview; notification rules; per-client branding; feature flags.</td><td class="acc">An administrator configures each area; changes take effect without a release.</td></tr>
+        <tr><td class="id">D-25</td><td class="name">Audit &amp; compliance</td><td>Immutable audit log (actor, action, before, after, timestamp), exportable; retention/purge and right-to-erasure; encryption in transit and at rest; field-level redaction for Client-role users.</td><td class="acc">Every material change is logged; retention and erasure workflows execute; redaction applies.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================
+     06 · TECHNICAL DELIVERABLES
+     ============================================================ -->
+<section id="technical" class="tint">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="sec-no">06</div>
+      <div class="t">
+        <div class="eyebrow">Build &amp; hand-over</div>
+        <h2>Technical deliverables</h2>
+        <p class="lead">Beyond the functional modules, the engagement delivers the following engineering and documentation assets.</p>
+      </div>
+    </div>
+
+    <div class="twocol">
+      <div class="listblock rv">
+        <span class="k">Front end</span>
+        <ul>
+          <li>Next.js 16 / React 19 / TypeScript application serving station, back-office and client-portal surfaces</li>
+          <li>Tokenised design system on Tailwind v4; dark-first station UI</li>
+          <li>Virtualised data grids (100k+ rows), real-time station status (WebSocket + SSE fallback)</li>
+          <li>Offline-tolerant capture (service worker + IndexedDB)</li>
+          <li>WCAG 2.2 AA on operator and supervisor journeys; LCP &lt; 2.0s, INP &lt; 200ms budgets</li>
+        </ul>
+      </div>
+      <div class="listblock rv" style="--d:70ms">
+        <span class="k">Back end</span>
+        <ul>
+          <li>NestJS / TypeScript API with OpenAPI specification</li>
+          <li>PostgreSQL 16 with row-level security; Redis + BullMQ job queue</li>
+          <li>S3-compatible object storage with presigned uploads</li>
+          <li>Python FastAPI inference service; TensorRT model serving on the Edge Node</li>
+          <li>Transactional-outbox webhooks; headless-Chromium PDF reporting</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="twocol" style="margin-top:var(--s5)">
+      <div class="listblock rv">
+        <span class="k">Infrastructure &amp; operations</span>
+        <ul>
+          <li>Dockerised services; Terraform-defined environments (staging + production)</li>
+          <li>GitHub Actions CI/CD with SCA, SAST and secret scanning</li>
+          <li>OpenTelemetry tracing to Grafana; Sentry error tracking</li>
+          <li>Cloud control plane plus one on-site Edge Node configuration</li>
+          <li>Nightly point-in-time backups with a 30-day recovery window</li>
+        </ul>
+      </div>
+      <div class="listblock rv" style="--d:70ms">
+        <span class="k">Documentation &amp; enablement</span>
+        <ul>
+          <li>Architecture overview and data-model reference</li>
+          <li>API reference (OpenAPI) and integration/webhook guide</li>
+          <li>Administrator, supervisor and operator user guides</li>
+          <li>Model retraining and evaluation guide</li>
+          <li>Operational runbooks and recorded training walkthroughs</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     07 · OUT OF SCOPE
+     ============================================================ -->
+<section id="out-of-scope" class="tight">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="sec-no">07</div>
+      <div class="t">
+        <div class="eyebrow">Exclusions</div>
+        <h2>Out of scope</h2>
+        <p class="lead">The following are explicitly excluded from this Statement of Work. Any of them may be added later under change control (Section 14).</p>
+      </div>
+    </div>
+    <div class="twocol rv">
+      <div class="listblock">
+        <span class="k">Not included</span>
+        <ul>
+          <li>Native mobile applications — the web app is responsive and installable</li>
+          <li>Automated repair-cost estimation and parts pricing</li>
+          <li>Marketplace listing sync (eBay, Back Market and similar)</li>
+          <li>Interface languages other than English</li>
+        </ul>
+      </div>
+      <div class="listblock" style="--d:70ms">
+        <span class="k">Not included</span>
+        <ul>
+          <li>Robotic device handling and conveyor control</li>
+          <li>Functional/electrical testing of the device itself (battery cycles, port continuity, screen response)</li>
+          <li>Integrations beyond the one ERP/WMS endpoint in D-21</li>
+          <li>Procurement of camera, lighting or GPU hardware</li>
+          <li>Ongoing managed hosting or a support retainer beyond warranty (Section 16)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     08 · ASSUMPTIONS / 09 · DEPENDENCIES
+     ============================================================ -->
+<section id="assumptions" class="tint">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="sec-no">08</div>
+      <div class="t">
+        <div class="eyebrow">Basis of estimate</div>
+        <h2>Assumptions &amp; dependencies</h2>
+        <p class="lead">The scope, timeline and price in this document rely on the following. A material change to any of them is handled under change control.</p>
+      </div>
+    </div>
+
+    <div class="twocol rv">
+      <div class="listblock">
+        <span class="k">Assumptions</span>
+        <ul>
+          <li>The Client provides sample devices covering its real intake mix, plus 1,500–3,000 photographs for training</li>
+          <li>Camera rig, lighting and GPU hardware are procured by the Client and on site by Week 3</li>
+          <li>One ERP/WMS integration endpoint is in scope</li>
+          <li>Interface and documentation are English-only</li>
+          <li>Cloud hosting and third-party licences are billed to the Client at cost</li>
+        </ul>
+      </div>
+      <div class="listblock" style="--d:70ms">
+        <span class="k">Client dependencies</span>
+        <ul>
+          <li>Defect taxonomy and grading rules signed off in Week 1</li>
+          <li>Two operators and one supervisor available for one day per sprint (labelling, review, UAT)</li>
+          <li>Timely access to environments, the SSO tenant and the integration endpoint</li>
+          <li>Decisions and approvals returned within two Business Days of request</li>
+          <li>A nominated Client project owner empowered to accept deliverables</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="legalnote rv">
+      <div class="k">Effect of delay</div>
+      <p>Where a Client dependency is not met by the date required, Pixorama will notify the Client; affected milestone dates move by the period of the delay, and any resulting standing time is handled under change control.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     10 · RESPONSIBILITIES
+     ============================================================ -->
+<section id="responsibilities" class="tight">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="sec-no">09</div>
+      <div class="t">
+        <div class="eyebrow">Who does what</div>
+        <h2>Responsibilities</h2>
+        <p class="lead">Obligations are stated at the level of each party. Pixorama resources the engagement at its own discretion to meet the deliverables and dates in this document.</p>
+      </div>
+    </div>
+    <div class="resp rv">
+      <div class="col">
+        <div class="h"><span class="lbl">Pixorama will</span></div>
+        <ul>
+          <li>Design, build, test and deliver all deliverables in Sections 05–06</li>
+          <li>Train and evaluate the detection model to the accuracy gate in Section 13</li>
+          <li>Run system and integration testing, and support Client UAT</li>
+          <li>Provide the documentation and training in Section 06</li>
+          <li>Report progress on an agreed cadence and maintain the change log and risk register</li>
+          <li>Nominate a single point of contact for the Client</li>
+        </ul>
+      </div>
+      <div class="col">
+        <div class="h"><span class="lbl">The Client will</span></div>
+        <ul>
+          <li>Provide sample devices, training photography and the signed-off taxonomy and grading rules</li>
+          <li>Procure and install the camera, lighting and GPU hardware by Week 3</li>
+          <li>Make operators and a supervisor available for labelling, review and UAT</li>
+          <li>Provide access to environments, the SSO tenant and the integration endpoint</li>
+          <li>Review deliverables and return acceptance decisions within the windows in Section 12</li>
+          <li>Nominate an empowered project owner to accept deliverables and resolve escalations</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     11 · METHODOLOGY / 12 · TIMELINE
+     ============================================================ -->
+<section id="timeline" class="dark">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="sec-no" style="color:var(--dark-faint)">10</div>
+      <div class="t">
+        <div class="eyebrow">How &amp; when</div>
+        <h2>Delivery approach &amp; timeline</h2>
+        <p class="lead">
+          Twelve weeks: four two-week sprints to feature-complete, then a four-week test and
+          acceptance phase. Each sprint ends in a working demo on staging and a stated exit
+          criterion. Code freezes at the end of Week 8.
+        </p>
+      </div>
+    </div>
+
+    <div class="gantt rv">
+      <div class="gscale">
+        <div class="lb">Phase</div>
+        <div class="w">W1</div><div class="w">W2</div><div class="w">W3</div><div class="w">W4</div>
+        <div class="w">W5</div><div class="w">W6</div><div class="w">W7</div><div class="w">W8</div>
+        <div class="w split-l">W9</div><div class="w">W10</div><div class="w">W11</div><div class="w">W12</div>
+      </div>
+      <div class="grow"><div class="name"><b>Sprint 1 · Foundations</b><span>WS1</span></div><div class="bar" style="--from:2; --to:4; --d:0ms">Auth · RBAC · shell</div></div>
+      <div class="grow"><div class="name"><b>Sprint 2 · Capture &amp; AI</b><span>WS2–3</span></div><div class="bar" style="--from:4; --to:6; --d:60ms">Station · inference</div></div>
+      <div class="grow"><div class="name"><b>Sprint 3 · Review &amp; grade</b><span>WS4</span></div><div class="bar" style="--from:6; --to:8; --d:120ms">Annotation · grading</div></div>
+      <div class="grow"><div class="name"><b>Sprint 4 · Records &amp; admin</b><span>WS5–6</span></div><div class="bar" style="--from:8; --to:10; --d:180ms">History · reports</div></div>
+      <div class="grow"><div class="name"><b>Model training</b><span>Continuous</span></div><div class="bar" style="--from:3; --to:10; --d:240ms">Label · train · evaluate</div></div>
+      <div class="grow"><div class="name"><b>SIT &amp; regression</b><span>Test</span></div><div class="bar test" style="--from:10; --to:12; --d:300ms">SIT · regression</div></div>
+      <div class="grow"><div class="name"><b>UAT &amp; accuracy</b><span>Test</span></div><div class="bar test" style="--from:11; --to:13; --d:360ms">UAT · holdout</div></div>
+      <div class="grow"><div class="name"><b>Perf · security · a11y</b><span>Test</span></div><div class="bar test" style="--from:12; --to:13; --d:420ms">Hardening</div></div>
+      <div class="grow"><div class="name"><b>Pilot &amp; handover</b><span>Go-live</span></div><div class="bar ghost" style="--from:13; --to:14; --d:480ms">Pilot</div></div>
+
+      <div class="phaselegend">
+        <div class="li"><span class="sw" style="background:var(--grad)"></span> Development · W1–W8</div>
+        <div class="li"><span class="sw" style="background:linear-gradient(120deg,#18bccf,#3a33c9)"></span> Testing &amp; acceptance · W9–W12</div>
+        <div class="li"><span class="sw" style="background:rgba(255,255,255,.12); border:1px dashed rgba(255,255,255,.3)"></span> Cutover</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     13 · MILESTONES
+     ============================================================ -->
+<section id="milestones">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="sec-no">11</div>
+      <div class="t">
+        <div class="eyebrow">Schedule</div>
+        <h2>Milestones &amp; deliverable schedule</h2>
+        <p class="lead">Each milestone is either a demonstration (Demo) or a formal gate (Gate). Payment is linked to the milestones marked in Section 15.</p>
+      </div>
+    </div>
+    <table class="deliv rv">
+      <thead><tr><th>ID</th><th>Milestone</th><th>Deliverables</th><th>Timing · type</th></tr></thead>
+      <tbody>
+        <tr><td class="id">M1</td><td class="name">Foundations live</td><td>D-01…D-05 — environments, auth, RBAC, app shell; taxonomy sign-off underway.</td><td class="acc">End W2 · Demo</td></tr>
+        <tr><td class="id">M2</td><td class="name">First device graded</td><td>D-06…D-13 — capture and the AI pipeline; a real device returned with detections.</td><td class="acc">End W4 · Demo</td></tr>
+        <tr><td class="id">M3</td><td class="name">Review &amp; grading</td><td>D-14…D-17 — annotation, correction, grading engine and disposition.</td><td class="acc">End W6 · Demo</td></tr>
+        <tr><td class="id">M4</td><td class="name">Feature complete</td><td>D-18…D-25 — records, data, dashboard, analytics, admin, audit. Code freeze.</td><td class="acc">End W8 · Gate</td></tr>
+        <tr><td class="id">M5</td><td class="name">UAT &amp; accuracy signed off</td><td>UAT passed; model meets the accuracy gate in Section 13.</td><td class="acc">End W10 · Gate</td></tr>
+        <tr><td class="id">M6</td><td class="name">Production go-live &amp; handover</td><td>Pilot line stable; documentation and training delivered; handover accepted.</td><td class="acc">End W12 · Gate</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================
+     14 · ACCEPTANCE
+     ============================================================ -->
+<section id="acceptance" class="tint">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="sec-no">12</div>
+      <div class="t">
+        <div class="eyebrow">Sign-off</div>
+        <h2>Acceptance process &amp; criteria</h2>
+        <p class="lead">How each deliverable and milestone is reviewed, corrected and accepted.</p>
+      </div>
+    </div>
+
+    <div class="clauses rv">
+      <div class="clause"><b>Review window</b><p>On submission of a deliverable, the Client has <strong>five Business Days</strong> to review it against its acceptance basis (Section 05) and either accept it or issue a written list of defects referencing specific criteria.</p></div>
+      <div class="clause"><b>Correction</b><p>Pixorama corrects valid defects and re-submits. The review window restarts for the re-submitted deliverable, limited to the previously raised items.</p></div>
+      <div class="clause"><b>Deemed acceptance</b><p>A deliverable is deemed accepted if the Client raises no written defects within the review window, or if it is used in production.</p></div>
+      <div class="clause"><b>Partial acceptance</b><p>A deliverable is not rejected as a whole for minor (S3/S4) defects; it is accepted with those items logged for correction inside the warranty period.</p></div>
+      <div class="clause"><b>Milestone gates</b><p>Gate milestones (M4–M6) require the associated deliverables to be accepted and the relevant tests in Section 13 to have passed.</p></div>
+    </div>
+
+    <h3 class="rv" style="margin-top:var(--s6)">Defect severity &amp; correction targets</h3>
+    <div class="sev rv">
+      <div class="sevcard"><div class="lv" style="color:var(--crit)">S1 · Critical</div><h4>Blocks core use</h4><p>Capture, grading or data integrity is unusable, with no workaround.</p><span class="fix">Fix: same Business Day</span></div>
+      <div class="sevcard"><div class="lv" style="color:var(--warn)">S2 · Major</div><h4>Serious impairment</h4><p>A key function fails or a workaround is costly.</p><span class="fix">Fix: 2 Business Days</span></div>
+      <div class="sevcard"><div class="lv" style="color:#c79a1a">S3 · Minor</div><h4>Limited impact</h4><p>A non-critical issue with an easy workaround.</p><span class="fix">Fix: next release</span></div>
+      <div class="sevcard"><div class="lv" style="color:var(--ok)">S4 · Cosmetic</div><h4>Trivial</h4><p>Visual or textual polish; no functional impact.</p><span class="fix">Fix: as scheduled</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     15 · TESTING & QA
+     ============================================================ -->
+<section id="testing" class="dark">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="sec-no" style="color:var(--dark-faint)">13</div>
+      <div class="t">
+        <div class="eyebrow">Four-week test phase</div>
+        <h2>Testing &amp; quality assurance</h2>
+        <p class="lead">Testing is a resourced, gated phase — not a hope. Each gate below must pass before the associated milestone is accepted.</p>
+      </div>
+    </div>
+
+    <div class="pipe rv" style="grid-template-columns:repeat(4,1fr)">
+      <div class="pstep"><div class="n">W9</div><h4>System &amp; regression</h4><p>Full SIT across station, API, inference and integrations; automated regression on a frozen build.</p></div>
+      <div class="pstep"><div class="n">W10</div><h4>UAT &amp; accuracy</h4><p>Client-run UAT scripts on real stock; model scored on the frozen holdout set.</p></div>
+      <div class="pstep"><div class="n">W11</div><h4>Perf · security · a11y</h4><p>Load and soak tests; third-party penetration test; WCAG 2.2 AA audit; failure drills.</p></div>
+      <div class="pstep loop"><div class="n">W12</div><h4>Pilot</h4><p>One live line, monitored, with the prior process running alongside.</p></div>
+    </div>
+
+    <h3 class="rv" style="margin-top:var(--s6)">Acceptance gates</h3>
+    <div class="twocol" style="margin-top:var(--s3)">
+      <div class="listblock rv">
+        <span class="k" style="color:var(--c); border-color:var(--dark-line)">Quantified thresholds</span>
+        <ul>
+          <li>Detection <strong>recall ≥ 0.90</strong> and <strong>precision ≥ 0.85</strong> on the top ten defect classes, measured on the holdout set</li>
+          <li>API <strong>p95 &lt; 300 ms</strong> at 3× expected peak throughput</li>
+          <li>Zero open <strong>S1/S2</strong> defects; regression suite green on three consecutive runs</li>
+          <li>No <strong>critical or high</strong> security findings open</li>
+          <li>WCAG 2.2 AA audit passed on operator and supervisor journeys</li>
+        </ul>
+      </div>
+      <div class="listblock rv" style="--d:70ms">
+        <span class="k" style="color:var(--c); border-color:var(--dark-line)">Evidence provided</span>
+        <ul>
+          <li>Per-class model scorecard against the holdout set</li>
+          <li>Grade-agreement study — platform grade vs expert human grade</li>
+          <li>Load and soak test reports</li>
+          <li>Penetration test report and remediation log</li>
+          <li>UAT results with a fix-or-defer decision on every item</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     16 · CHANGE CONTROL
+     ============================================================ -->
+<section id="change">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="sec-no">14</div>
+      <div class="t">
+        <div class="eyebrow">Managing scope</div>
+        <h2>Change control</h2>
+        <p class="lead">The deliverables in Sections 05–06 are the agreed scope. Any change to them follows this process; nothing outside it alters price or timeline.</p>
+      </div>
+    </div>
+    <div class="clauses rv">
+      <div class="clause"><b>Raising a change</b><p>Either party may raise a change request in writing, describing the change and its reason.</p></div>
+      <div class="clause"><b>Impact assessment</b><p>Pixorama assesses the impact on scope, timeline and price and issues a change note, normally within three Business Days.</p></div>
+      <div class="clause"><b>Approval</b><p>Work on a change begins only once the Client approves the change note in writing. Approved changes are appended to this Statement of Work.</p></div>
+      <div class="clause"><b>Swaps</b><p>By agreement, a new item of equivalent size may be exchanged for an unstarted deliverable at no change to price or timeline.</p></div>
+      <div class="clause"><b>Standing changes</b><p>Rules, taxonomy, grade profiles and branding are configurable and are changed by the Client without a release — these are not change requests.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     17 · COMMERCIALS
+     ============================================================ -->
+<section id="commercials" class="tint">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="sec-no">15</div>
+      <div class="t">
+        <div class="eyebrow">Fees &amp; payment</div>
+        <h2>Commercials &amp; payment schedule</h2>
+        <p class="lead">
+          The engagement is delivered for a fixed fee against the fixed scope in this document.
+          Payment is linked to milestone acceptance. Figures are completed on execution.
+        </p>
+      </div>
+    </div>
+
+    <table class="pay rv">
+      <thead><tr><th>Trigger</th><th>Milestone</th><th style="text-align:right">Share</th><th style="text-align:right">Amount</th></tr></thead>
+      <tbody>
+        <tr><td class="mstone">Mobilisation</td><td>On signature of this SOW</td><td class="pct">15%</td><td class="amt">[ &nbsp; ]</td></tr>
+        <tr><td class="mstone">M2 · End W4</td><td>First device graded end to end</td><td class="pct">15%</td><td class="amt">[ &nbsp; ]</td></tr>
+        <tr><td class="mstone">M3 · End W6</td><td>Review &amp; grading accepted</td><td class="pct">15%</td><td class="amt">[ &nbsp; ]</td></tr>
+        <tr><td class="mstone">M4 · End W8</td><td>Feature complete · code freeze</td><td class="pct">20%</td><td class="amt">[ &nbsp; ]</td></tr>
+        <tr><td class="mstone">M5 · End W10</td><td>UAT &amp; accuracy signed off</td><td class="pct">15%</td><td class="amt">[ &nbsp; ]</td></tr>
+        <tr><td class="mstone">M6 · End W12</td><td>Go-live &amp; handover accepted</td><td class="pct">15%</td><td class="amt">[ &nbsp; ]</td></tr>
+        <tr><td class="mstone">Warranty end</td><td>End of the warranty period (Section 16)</td><td class="pct">5%</td><td class="amt">[ &nbsp; ]</td></tr>
+        <tr class="total"><td class="mstone">Total</td><td>Fixed engagement fee</td><td class="pct">100%</td><td class="amt">[ total ]</td></tr>
+      </tbody>
+    </table>
+
+    <div class="legalnote rv">
+      <div class="k">Commercial notes</div>
+      <p>
+        Amounts, currency, tax treatment and invoice terms are inserted on execution and
+        are governed by the parties' master agreement. Cloud hosting and third-party
+        licences are billed to the Client at cost and are additional to the fixed fee.
+        Invoices are payable within the agreed terms of each accepted milestone.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     18 · WARRANTY & IP
+     ============================================================ -->
+<section id="warranty">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="sec-no">16</div>
+      <div class="t">
+        <div class="eyebrow">After go-live</div>
+        <h2>Warranty, support &amp; IP</h2>
+      </div>
+    </div>
+    <div class="split">
+      <div class="rv">
+        <div class="clauses">
+          <div class="clause"><b>Hypercare</b><p>Thirty days of close monitoring and priority defect response from Go-Live, at no additional cost.</p></div>
+          <div class="clause"><b>Warranty period</b><p>Ninety days from Go-Live during which S1 and S2 defects in delivered scope are corrected at no cost.</p></div>
+          <div class="clause"><b>Exclusions</b><p>Warranty excludes issues caused by Client changes to configuration, unsupported environments, or third-party systems outside the delivered scope.</p></div>
+          <div class="clause"><b>Ongoing support</b><p>Support or a managed-service arrangement beyond warranty is available under a separate agreement.</p></div>
+        </div>
+      </div>
+      <div class="rv" style="--d:80ms">
+        <div class="clauses">
+          <div class="clause"><b>Ownership</b><p>On full payment, intellectual property in the bespoke deliverables and the trained model weights transfers to the Client.</p></div>
+          <div class="clause"><b>Pre-existing IP</b><p>Pixorama retains its pre-existing tools, libraries and know-how, and grants the Client a licence to use them as embedded in the deliverables.</p></div>
+          <div class="clause"><b>Third-party components</b><p>Open-source and third-party components remain under their own licences, disclosed on handover.</p></div>
+          <div class="clause"><b>Confidentiality &amp; data</b><p>Each party protects the other's confidential information; personal data is handled per the parties' data-processing terms.</p></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="legalnote rv">
+      <div class="k">Precedence</div>
+      <p>This Statement of Work governs scope, acceptance, schedule and commercials for this engagement. Legal terms (liability, warranties, IP, data protection, termination) are governed by the parties' master services agreement; where that agreement is silent, the clauses above apply. Nothing here is legal advice, and the parties should have this document reviewed before signature.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     19 · GOVERNANCE
+     ============================================================ -->
+<section id="governance" class="tint tight">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="sec-no">17</div>
+      <div class="t">
+        <div class="eyebrow">Running the engagement</div>
+        <h2>Governance &amp; reporting</h2>
+      </div>
+    </div>
+    <div class="checks rv">
+      <div class="check"><span class="ic"></span><span class="tx"><b>Weekly demo</b><span>A working demonstration on staging at the end of each week.</span></span></div>
+      <div class="check"><span class="ic"></span><span class="tx"><b>Written status</b><span>A weekly note covering progress, upcoming work, risks and any blocked dependencies.</span></span></div>
+      <div class="check"><span class="ic"></span><span class="tx"><b>Shared board</b><span>A live board the Client can view at any time.</span></span></div>
+      <div class="check"><span class="ic"></span><span class="tx"><b>Single points of contact</b><span>Each party nominates one contact for day-to-day decisions.</span></span></div>
+      <div class="check"><span class="ic"></span><span class="tx"><b>Change &amp; risk logs</b><span>Maintained throughout and reviewed at the weekly checkpoint.</span></span></div>
+      <div class="check"><span class="ic"></span><span class="tx"><b>Escalation</b><span>Unresolved items escalate to each party's nominated owner within two Business Days.</span></span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     20 · RISK
+     ============================================================ -->
+<section id="risk">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="sec-no">18</div>
+      <div class="t">
+        <div class="eyebrow">Managed openly</div>
+        <h2>Key risks &amp; mitigation</h2>
+      </div>
+    </div>
+    <table class="risk rv">
+      <thead><tr><th>Risk</th><th>Level</th><th>Mitigation</th></tr></thead>
+      <tbody>
+        <tr><td>Insufficient labelled training data</td><td><span class="lvl h">High</span></td><td>Pretrained backbone; Week-1 labelling sprint; active learning from operator corrections; sub-threshold detections route to human review.</td></tr>
+        <tr><td>Hardware arrives late</td><td><span class="lvl h">High</span></td><td>Mock camera driver and recorded image set in Sprint 2; hardware spec frozen at Week 3; software never blocked on hardware.</td></tr>
+        <tr><td>Lighting / positioning variance</td><td><span class="lvl m">Medium</span></td><td>Fixed rig geometry, per-station calibration, automatic exposure/focus validation.</td></tr>
+        <tr><td>Integration access delayed</td><td><span class="lvl m">Medium</span></td><td>Contract-first connector against an agreed schema with a stub; swapped to live on credentials. Not on the critical path.</td></tr>
+        <tr><td>Scope growth</td><td><span class="lvl m">Medium</span></td><td>Fixed deliverable list; change control (Section 14); equal-size swaps.</td></tr>
+        <tr><td>Operator adoption</td><td><span class="lvl l">Low</span></td><td>Client operators involved from Week 1, in every demo, and run UAT themselves.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================
+     21 · SIGN-OFF
+     ============================================================ -->
+<section id="signoff" class="close dark">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="sec-no" style="color:var(--dark-faint)">19</div>
+      <div class="t">
+        <div class="eyebrow">Authorisation</div>
+        <h2>Acceptance &amp; signature</h2>
+        <p class="lead">By signing below, each party agrees to the scope, deliverables, acceptance criteria, timeline and commercial terms set out in this Statement of Work.</p>
+      </div>
+    </div>
+
+    <div class="signoff">
+      <div class="sig rv">
+        <div class="k">Accepted for the Client</div>
+        <div class="line"></div>
+        <div class="who">Hugo Martinez</div>
+        <div class="sub">Signature · Date</div>
+      </div>
+      <div class="sig rv" style="--d:60ms">
+        <div class="k">For and on behalf of Pixorama Group</div>
+        <div class="line"></div>
+        <div class="who">Authorised signatory</div>
+        <div class="sub">Signature · Date</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="hair" style="margin-bottom:28px"></div>
+    <div class="fbar">
+      <span class="lock">
+        <svg class="mark" viewBox="0 0 179 100" role="img" aria-label="Pixorama">
+          <defs><linearGradient id="pxo-f" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4f2fdb" /><stop offset=".55" stop-color="#7c3aed" /><stop offset="1" stop-color="#c13ccf" /></linearGradient></defs>
+          <rect x="0" y="0" width="100" height="100" rx="27" fill="url(#pxo-f)" />
+          <text x="50" y="50" fill="#fff" font-family="Manrope,sans-serif" font-size="44" font-weight="800" letter-spacing="-1" text-anchor="middle" dominant-baseline="central">PX</text>
+          <circle cx="142" cy="50" r="30" fill="none" stroke="#6d55e8" stroke-width="13" />
+        </svg>
+        <span class="word">Pixorama<em>.</em></span>
+      </span>
+      <span>Confidential · Statement of Work · Prepared for Hugo Martinez</span>
+      <span>SOW-2026-011 · v1.0</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var canObserve = 'IntersectionObserver' in window;
+
+  /* Only hide content for the reveal once we know we can bring it back. */
+  if(canObserve && !reduce) document.documentElement.classList.add('js-motion');
+
+  /* ---- scroll progress ---- */
+  var bar = document.getElementById('pbar'), ticking = false;
+  function progress(){
+    var h = document.documentElement;
+    var p = h.scrollTop / Math.max(1, h.scrollHeight - h.clientHeight);
+    bar.style.transform = 'scaleX(' + p + ')';
+    ticking = false;
+  }
+  addEventListener('scroll', function(){
+    if(!ticking){ ticking = true; requestAnimationFrame(progress); }
+  }, {passive:true});
+  progress();
+
+  /* ---- count-up ---- */
+  function countUp(el){
+    var target = parseFloat(el.dataset.count);
+    var suffix = el.dataset.suffix || '';
+    if(reduce){ el.textContent = target + suffix; return; }
+    var t0 = null, dur = 900;
+    function frame(t){
+      if(!t0) t0 = t;
+      var k = Math.min(1, (t - t0) / dur);
+      var eased = 1 - Math.pow(1 - k, 3);
+      el.textContent = Math.round(target * eased) + suffix;
+      if(k < 1) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  /* ---- reveal on scroll ---- */
+  var targets = document.querySelectorAll('.rv, .grow .bar');
+
+  function show(el){
+    if(el.classList.contains('in')) return;
+    el.classList.add('in');
+    el.querySelectorAll('[data-count]').forEach(countUp);
+    if(el.matches('[data-count]')) countUp(el);
+  }
+
+  if(!canObserve || reduce){
+    targets.forEach(show);
+    return;
+  }
+
+  /* Reveal anything on screen or above it. Idempotent and cheap, so it can be
+     called from anywhere — this, not the observer, is what guarantees the
+     document is readable. Deep links (…/#features), restored scroll positions
+     and renderers with a broken IntersectionObserver all land here. */
+  var pending = false;
+  function sweep(){
+    pending = false;
+    var limit = innerHeight * 1.15;
+    for(var i = 0; i < targets.length; i++){
+      if(targets[i].getBoundingClientRect().top < limit) show(targets[i]);
+    }
+  }
+  function queueSweep(){
+    if(pending) return;
+    pending = true;
+    requestAnimationFrame(sweep);
+  }
+
+  /* Fast path: reveal exactly at the threshold while scrolling normally. */
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(!e.isIntersecting) return;
+      show(e.target);
+      io.unobserve(e.target);
+    });
+  }, {rootMargin:'0px 0px -6% 0px', threshold:0});
+  targets.forEach(function(el){ io.observe(el); });
+
+  addEventListener('scroll', queueSweep, {passive:true});
+  addEventListener('resize', queueSweep, {passive:true});
+  addEventListener('load', queueSweep);
+  addEventListener('hashchange', function(){ setTimeout(sweep, 450); });
+
+  /* Anchor jumps and late layout settle at unpredictable moments; a handful of
+     early sweeps costs nothing and removes every "blank until you scroll" case. */
+  sweep();
+  [120, 600, 1600, 3200].forEach(function(ms){ setTimeout(sweep, ms); });
+})();
+</script>
+</body>
+</html>
