@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Device Inspector · Kickoff Summary · Pixorama → Hugo Martinez</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+/* One-page kickoff summary · Pixorama house system · A4 print-first */
+:root{
+  --i:#3a33c9; --c:#18bccf; --v:#7c3aed; --p:#b23fc9;
+  --grad:linear-gradient(120deg,var(--i) 0%,var(--v) 52%,var(--p) 100%);
+  --ink:#0d0e1a; --ink2:#33354a; --muted:#5f6178; --faint:#686b82;
+  --line:#e7e9f2; --line2:#f0f2f8; --paper:#fff; --paper2:#f6f7fb; --dark:#05050f;
+  --ok:#0f9d6b; --warn:#b7791f;
+}
+*,*::before,*::after{ box-sizing:border-box; margin:0; padding:0; }
+@page{ size:A4; margin:0; }
+html,body{ background:#5b5d72; }
+body{ font-family:'Manrope',-apple-system,'Segoe UI',sans-serif; color:var(--ink);
+  -webkit-font-smoothing:antialiased; }
+*{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+
+.page{ position:relative; width:210mm; height:297mm; margin:0 auto; background:var(--paper);
+  background-image:
+    radial-gradient(42% 30% at 90% 2%, rgba(124,58,237,.07), transparent 70%),
+    radial-gradient(40% 30% at 4% 100%, rgba(24,188,207,.06), transparent 70%);
+  overflow:hidden; }
+.pad{ position:absolute; inset:0; padding:13mm 14mm 12mm; display:flex; flex-direction:column; }
+
+.mono{ font-family:'JetBrains Mono',monospace; }
+.eyebrow{ font-family:'JetBrains Mono',monospace; font-size:8pt; letter-spacing:.26em;
+  text-transform:uppercase; color:var(--i); font-weight:500; }
+
+/* header */
+.head{ display:flex; align-items:center; justify-content:space-between; gap:8mm;
+  padding-bottom:5mm; border-bottom:1px solid var(--line); }
+.lock{ display:flex; align-items:center; gap:9px; }
+.lock svg{ height:26px; width:auto; display:block; }
+.lock .word{ font-size:10.5pt; font-weight:800; letter-spacing:.15em; color:#7c3aed; }
+.head .meta{ text-align:right; font-family:'JetBrains Mono',monospace; font-size:7.5pt;
+  color:var(--faint); line-height:1.7; letter-spacing:.06em; }
+
+h1{ font-size:19pt; font-weight:800; letter-spacing:-.02em; line-height:1.05; margin-top:5mm; }
+h1 em{ font-style:normal; color:var(--v); }
+.intro{ font-size:9pt; line-height:1.5; color:var(--ink2); margin-top:2.5mm; max-width:150mm; }
+
+/* stat rail */
+.rail{ display:flex; gap:7mm; margin-top:4mm; padding:3.2mm 4mm; border:1px solid var(--line);
+  border-radius:3mm; background:var(--paper2); }
+.rail .s{ flex:1; text-align:center; }
+.rail .n{ font-family:'JetBrains Mono',monospace; font-size:12.5pt; font-weight:700; color:var(--i); letter-spacing:-.02em; }
+.rail .l{ font-family:'JetBrains Mono',monospace; font-size:7.2pt; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--faint); margin-top:1mm; }
+
+/* main grid */
+.grid{ display:grid; grid-template-columns:1fr 1fr; gap:5mm 7mm; margin-top:5mm; flex:1; min-height:0; }
+.block h2{ font-size:9.5pt; font-weight:800; letter-spacing:-.01em; display:flex; align-items:center; gap:2mm;
+  padding-bottom:1.8mm; border-bottom:2px solid; border-image:var(--grad) 1; margin-bottom:2.4mm; }
+.block h2 .tag{ font-family:'JetBrains Mono',monospace; font-size:7.2pt; font-weight:700;
+  letter-spacing:.12em; color:var(--v); }
+ul{ list-style:none; }
+li{ position:relative; padding-left:4.6mm; font-size:8pt; line-height:1.42; color:var(--ink2); margin-bottom:1.5mm; }
+li::before{ content:''; position:absolute; left:0; top:1.35mm; width:1.7mm; height:1.7mm;
+  border-radius:.5mm; background:var(--grad); }
+li b{ color:var(--ink); font-weight:700; }
+li .wk{ font-family:'JetBrains Mono',monospace; font-size:7.5pt; color:var(--v); font-weight:700; }
+
+/* timeline strip */
+.tl{ display:flex; gap:1mm; margin:1mm 0 2.2mm; }
+.tl .ph{ flex:1; text-align:center; font-family:'JetBrains Mono',monospace; font-size:7pt;
+  font-weight:700; letter-spacing:.04em; color:#fff; padding:1.6mm 0; border-radius:1.2mm; }
+.tl .b1{ background:var(--i); } .tl .b2{ background:var(--v); } .tl .b3{ background:var(--p); }
+.tl .b4{ background:#8a4fd8; } .tl .t1{ background:var(--c); } .tl .t2{ background:#12a5b8; }
+.gates{ display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace;
+  font-size:7.3pt; color:var(--faint); letter-spacing:.03em; margin-bottom:2.4mm; }
+
+/* footer */
+.foot{ margin-top:4mm; padding-top:3mm; border-top:1px solid var(--line);
+  display:flex; justify-content:space-between; align-items:center; gap:6mm; }
+.foot .cta{ font-size:8pt; color:var(--ink2); line-height:1.45; max-width:120mm; }
+.foot .cta b{ color:var(--v); }
+.foot .id{ font-family:'JetBrains Mono',monospace; font-size:7pt; color:var(--faint);
+  letter-spacing:.1em; text-transform:uppercase; text-align:right; line-height:1.7; }
+</style>
+</head>
+<body>
+<div class="page"><div class="pad">
+
+  <div class="head">
+    <span class="lock">
+      <svg viewBox="0 0 179 100" role="img" aria-label="Pixorama">
+        <defs><linearGradient id="pxo" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#4f2fdb"/><stop offset=".55" stop-color="#7c3aed"/><stop offset="1" stop-color="#c13ccf"/>
+        </linearGradient></defs>
+        <rect width="100" height="100" rx="27" fill="url(#pxo)"/>
+        <text x="50" y="50" fill="#fff" font-family="Manrope,sans-serif" font-size="44" font-weight="800" letter-spacing="-1" text-anchor="middle" dominant-baseline="central">PX</text>
+        <circle cx="142" cy="50" r="30" fill="none" stroke="#6d55e8" stroke-width="13"/>
+      </svg>
+      <span class="word">PIXORAMA.</span>
+    </span>
+    <div class="meta">
+      Kickoff summary · v1.0<br>
+      Prepared for Hugo Martinez<br>
+      Companion to SOW-2026-011
+    </div>
+  </div>
+
+  <h1>AI Device Inspector — <em>plan, ask &amp; setup on one page.</em></h1>
+  <p class="intro">
+    Photograph a laptop from six angles, let the model find the damage, and produce a defensible
+    grade in under a minute — consistent across every operator and shift, with photographs and a
+    full audit trail behind every decision. This page summarises the delivery plan, what we need
+    from you, and the capture hardware to procure. Detail lives in the proposal and the Statement of Work.
+  </p>
+
+  <div class="rail">
+    <div class="s"><div class="n">12</div><div class="l">Weeks total</div></div>
+    <div class="s"><div class="n">8 + 4</div><div class="l">Build + test</div></div>
+    <div class="s"><div class="n">12</div><div class="l">Modules</div></div>
+    <div class="s"><div class="n">60</div><div class="l">Features</div></div>
+    <div class="s"><div class="n">6</div><div class="l">Milestones</div></div>
+    <div class="s"><div class="n">&#8805;0.90</div><div class="l">Recall gate</div></div>
+    <div class="s"><div class="n">60s</div><div class="l">Per device</div></div>
+  </div>
+
+  <div class="grid">
+
+    <div class="block">
+      <h2>Delivery plan <span class="tag">12 WEEKS</span></h2>
+      <div class="tl">
+        <span class="ph b1">S1 · W1–2</span><span class="ph b2">S2 · W3–4</span>
+        <span class="ph b3">S3 · W5–6</span><span class="ph b4">S4 · W7–8</span>
+        <span class="ph t1">TEST · W9–11</span><span class="ph t2">LIVE · W12</span>
+      </div>
+      <div class="gates"><span>M1</span><span>M2</span><span>M3</span><span>M4 · freeze</span><span>M5 · UAT</span><span>M6 · go-live</span></div>
+      <ul>
+        <li><span class="wk">W1–2</span> <b>Foundations</b> — auth, roles, tenancy, design system, app shell</li>
+        <li><span class="wk">W3–4</span> <b>Capture + AI</b> — station workflow, inference; first device graded end-to-end</li>
+        <li><span class="wk">W5–6</span> <b>Review &amp; grading</b> — annotation tools, grading engine, disposition</li>
+        <li><span class="wk">W7–8</span> <b>Records &amp; admin</b> — history, reports, analytics, integrations · <b>code freeze</b></li>
+        <li><span class="wk">W9–11</span> <b>Test</b> — SIT &amp; regression · UAT + model accuracy · load, pen-test, accessibility</li>
+        <li><span class="wk">W12</span> <b>Go-live</b> — monitored pilot line, training, handover · 30 days hypercare</li>
+      </ul>
+    </div>
+
+    <div class="block">
+      <h2>What we need from you <span class="tag">THE ASK</span></h2>
+      <ul>
+        <li><b>Scope sign-off</b> — confirm the 60 features and exclusions; sign the SOW</li>
+        <li><b>Training data</b> — 1,500–3,000 intake photos + sample devices across your real mix</li>
+        <li><b>Week-1 workshop</b> — one day to lock defect taxonomy and grading rules</li>
+        <li><b>Hardware on site by Week 3</b> — camera rig, lighting, GPU (spec at right)</li>
+        <li><b>Access</b> — environments, SSO tenant, one ERP/WMS endpoint</li>
+        <li><b>People</b> — 2 operators + 1 supervisor, ~1 day per sprint (labelling, review, UAT)</li>
+        <li><b>Decisions</b> — a nominated owner; approvals returned within 2 business days</li>
+      </ul>
+    </div>
+
+    <div class="block">
+      <h2>Acceptance gates <span class="tag">PROVEN, NOT PROMISED</span></h2>
+      <ul>
+        <li><b>Model accuracy</b> — recall &#8805; 0.90 · precision &#8805; 0.85 on the top-10 defect classes, on a frozen holdout set</li>
+        <li><b>Performance</b> — API p95 &lt; 300 ms at 3&#215; peak; capture-to-grade under 60 s</li>
+        <li><b>Quality</b> — zero open S1/S2 defects; regression green 3 runs in a row</li>
+        <li><b>Security &amp; access</b> — third-party pen test clean of high/critical; WCAG 2.2 AA</li>
+        <li><b>Payment follows milestones</b> — 15 / 15 / 15 / 20 / 15 / 15 % + 5% at warranty end</li>
+      </ul>
+    </div>
+
+    <div class="block">
+      <h2>Capture setup to procure <span class="tag">CLIENT-SUPPLIED</span></h2>
+      <ul>
+        <li><b>Booth / fixture</b> — matte enclosure with a repeatable cradle for your device sizes</li>
+        <li><b>6 cameras</b> — 12–20 MP industrial (GigE), fixed mounts: top, bottom, left, right, front, keyboard</li>
+        <li><b>Lighting</b> — diffuse flicker-free LED panels + low-angle raking light for scratches</li>
+        <li><b>Edge GPU node</b> — one on-site box (RTX-class) running local inference</li>
+        <li><b>Trigger &amp; ID</b> — single trigger (pedal/button) firing all six; barcode/QR scanner</li>
+        <li><b>Network &amp; power</b> — PoE gigabit switch; UPS recommended</li>
+        <li><b>Final spec confirmed in the Week-1 workshop</b> — device mix &amp; throughput set camera and lens choices; we develop against a mock rig so software never waits on hardware</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <div class="foot">
+    <div class="cta">
+      <b>To start:</b> return the signed SOW and book the Week-1 workshop — we mobilise the same week.
+      Full detail: Platform Proposal · Statement of Work SOW-2026-011 · delivery tracker &amp; diagrams in the project repository.
+    </div>
+    <div class="id">Pixorama Group<br>Confidential · 2026</div>
+  </div>
+
+</div></div>
+</body>
+</html>
